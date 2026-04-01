@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="title desc">
+  <title id="title">Prismatic</title>
+  <desc id="desc">Hexagonal logo with layered GraphQL nodes and prism-inspired beams.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06121e"/>
+      <stop offset="55%" stop-color="#0d2740"/>
+      <stop offset="100%" stop-color="#12385c"/>
+    </linearGradient>
+    <linearGradient id="hex" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5cf0ff"/>
+      <stop offset="50%" stop-color="#5db0ff"/>
+      <stop offset="100%" stop-color="#a57cff"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#f9ff91"/>
+      <stop offset="45%" stop-color="#78f7ff"/>
+      <stop offset="100%" stop-color="#ff8fd1"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#04101b" flood-opacity="0.55"/>
+    </filter>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <g transform="translate(0 10) scale(1.285714 1.285714) translate(-22.222 -20)">
+    <path d="M100 20 160 55v70l-60 35-60-35V55Z" fill="#081a2b" stroke="url(#hex)" stroke-width="6" filter="url(#shadow)"/>
+    <path d="M100 44 139 66v45l-39 23-39-23V66Z" fill="#0d2740" stroke="#79daff" stroke-width="2.5" opacity="0.95"/>
+    <path d="M42 101h43l17-28 19 17 37 0" fill="none" stroke="url(#beam)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+    <path d="M68 124 99 76l33 48Z" fill="#15395a" stroke="#8fdfff" stroke-width="3"/>
+    <circle cx="42" cy="101" r="8" fill="#f9ff91"/>
+    <circle cx="85" cy="101" r="6" fill="#7af0ff"/>
+    <circle cx="102" cy="73" r="6" fill="#6eb8ff"/>
+    <circle cx="121" cy="90" r="6" fill="#d49cff"/>
+    <circle cx="158" cy="90" r="8" fill="#ff9ed4"/>
+    <path d="M72 138c12 10 44 10 56 0" fill="none" stroke="#5cf0ff" stroke-width="2.5" opacity="0.7"/>
+  </g>
+</svg>

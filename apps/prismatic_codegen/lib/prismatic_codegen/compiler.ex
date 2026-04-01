@@ -1,0 +1,201 @@
+defmodule PrismaticCodegen.Compiler do
+  @moduledoc """
+  Compiler from provider definitions into a GraphQL-native provider IR.
+  """
+
+  alias Prismatic.Operation
+  alias PrismaticCodegen.Provider
+  alias PrismaticCodegen.ProviderIR
+  alias PrismaticCodegen.Render.ElixirSDK
+  alias PrismaticCodegen.RenderedFile
+  alias PrismaticCodegen.Source.Documents
+  alias PrismaticCodegen.Source.Introspection
+
+  @spec compile(Provider.t() | module() | String.t()) :: {:ok, ProviderIR.t()} | {:error, term()}
+  def compile(provider) do
+    {:ok, compile!(provider)}
+  rescue
+    error in [ArgumentError] -> {:error, error}
+  end
+
+  @spec compile!(Provider.t() | module() | String.t()) :: ProviderIR.t()
+  def compile!(provider) do
+    provider = Provider.load!(provider)
+    introspection = Introspection.load!(provider.source.introspection_path)
+    documents = Documents.load!(provider.source.documents_root)
+    operation_specs = build_operation_specs(provider, documents, introspection)
+    models = build_models(provider, operation_specs, introspection)
+    enums = build_enums(provider, models, introspection)
+    operations = attach_model_modules(operation_specs, models)
+
+    %ProviderIR{
+      provider: %ProviderIR.Provider{
+        name: provider.name,
+        namespace: provider.namespace,
+        client_module: provider.client_module,
+        base_url: provider.base_url,
+        auth: provider.auth,
+        output: %{
+          lib_root: provider.output.lib_root,
+          docs_path: provider.output.docs_path
+        }
+      },
+      schema: %{
+        query_type_name: introspection.query_type_name,
+        mutation_type_name: introspection.mutation_type_name
+      },
+      documents: documents,
+      operations: operations,
+      models: models,
+      enums: enums,
+      artifact_plan: %ProviderIR.ArtifactPlan{
+        files: build_artifact_plan(provider, operations, models, enums)
+      }
+    }
+  end
+
+  @spec render!(Provider.t() | module() | String.t()) :: [PrismaticCodegen.RenderedFile.t()]
+  def render!(provider) do
+    provider
+    |> compile!()
+    |> ElixirSDK.render()
+    |> Enum.map(&normalize_rendered_file/1)
+  end
+
+  @spec generate!(Provider.t() | module() | String.t()) :: :ok
+  def generate!(provider) do
+    provider = Provider.load!(provider)
+
+    render!(provider)
+    |> Enum.each(fn file ->
+      path = Path.join(provider.output.root, file.path)
+      File.mkdir_p!(Path.dirname(path))
+      File.write!(path, file.content)
+    end)
+
+    :ok
+  end
+
+  defp build_operation_specs(provider, documents, introspection) do
+    Enum.map(documents, fn document ->
+      root_field = Introspection.query_field!(introspection, document.root_field, document.kind)
+      response_type = root_field.type |> Introspection.named_type() |> Map.fetch!(:name)
+
+      %ProviderIR.Operation{
+        id: document.id,
+        name: document.name,
+        module: Module.concat([provider.namespace, "Operations", document.name]),
+        operation:
+          Operation.new!(
+            id: document.id,
+            name: document.name,
+            kind: document.kind,
+            document: document.document,
+            root_field: document.root_field
+          ),
+        document: document,
+        response_type: response_type,
+        model_module: nil
+      }
+    end)
+  end
+
+  defp build_models(provider, operations, introspection) do
+    operations
+    |> Enum.map(& &1.response_type)
+    |> Enum.uniq()
+    |> Enum.flat_map(fn type_name ->
+      type = Introspection.type!(introspection, type_name)
+
+      case type.kind do
+        "OBJECT" ->
+          [
+            %ProviderIR.Model{
+              name: type_name,
+              module: Module.concat([provider.namespace, "Models", type_name]),
+              fields:
+                Enum.map(type.fields, fn field ->
+                  named = Introspection.named_type(field.type)
+
+                  %ProviderIR.Model.Field{
+                    name: field.name,
+                    key: field.name |> Macro.underscore() |> String.to_atom(),
+                    kind: named.kind,
+                    type_name: named.name
+                  }
+                end)
+            }
+          ]
+
+        _other ->
+          []
+      end
+    end)
+  end
+
+  defp build_enums(provider, models, introspection) do
+    models
+    |> Enum.flat_map(& &1.fields)
+    |> Enum.filter(&(&1.kind == "ENUM"))
+    |> Enum.map(& &1.type_name)
+    |> Enum.uniq()
+    |> Enum.map(fn type_name ->
+      type = Introspection.type!(introspection, type_name)
+
+      %ProviderIR.Enum{
+        name: type_name,
+        module: Module.concat([provider.namespace, "Enums", type_name]),
+        values: type.enum_values
+      }
+    end)
+  end
+
+  defp attach_model_modules(operations, models) do
+    model_modules = Map.new(models, &{&1.name, &1.module})
+
+    Enum.map(operations, fn operation ->
+      %{operation | model_module: Map.get(model_modules, operation.response_type)}
+    end)
+  end
+
+  defp build_artifact_plan(provider, operations, models, enums) do
+    [
+      namespace_root_path(provider)
+      | Enum.map(operations, &module_path(provider, &1.module))
+    ] ++
+      Enum.map(models, &module_path(provider, &1.module)) ++
+      Enum.map(enums, &module_path(provider, &1.module)) ++
+      [provider.output.docs_path]
+  end
+
+  defp namespace_root_path(provider) do
+    "#{provider.output.lib_root}.ex"
+  end
+
+  defp module_path(provider, module) do
+    suffix =
+      module
+      |> Module.split()
+      |> Enum.drop(length(Module.split(provider.namespace)))
+      |> Enum.map(&Macro.underscore/1)
+
+    Path.join([provider.output.lib_root | suffix]) <> ".ex"
+  end
+
+  defp normalize_rendered_file(%RenderedFile{} = file) do
+    %{file | content: normalize_content(file.path, file.content)}
+  end
+
+  defp normalize_content(path, content) do
+    case Path.extname(path) do
+      ".ex" ->
+        content
+        |> Code.format_string!()
+        |> IO.iodata_to_binary()
+        |> Kernel.<>("\n")
+
+      _other ->
+        content
+    end
+  end
+end
