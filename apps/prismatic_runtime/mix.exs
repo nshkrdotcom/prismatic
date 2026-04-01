@@ -55,7 +55,7 @@ defmodule Prismatic.Runtime.MixProject do
 
   defp docs do
     [
-      main: "readme",
+      main: "Prismatic",
       name: "Prismatic",
       source_ref: "v#{@version}",
       source_url: @source_url,
@@ -64,9 +64,12 @@ defmodule Prismatic.Runtime.MixProject do
       logo: "assets/prismatic.svg",
       extras: [
         "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
         "guides/getting-started.md",
         "guides/runtime-contract.md",
-        "guides/error-handling-and-telemetry.md"
+        "guides/error-handling-and-telemetry.md",
+        "examples/README.md"
       ],
       groups_for_extras: [
         Overview: ["README.md"],
@@ -74,7 +77,9 @@ defmodule Prismatic.Runtime.MixProject do
           "guides/getting-started.md",
           "guides/runtime-contract.md",
           "guides/error-handling-and-telemetry.md"
-        ]
+        ],
+        Examples: ["examples/README.md"],
+        Project: ["CHANGELOG.md", "LICENSE"]
       ]
     ]
   end
@@ -83,7 +88,7 @@ defmodule Prismatic.Runtime.MixProject do
     [
       name: "prismatic",
       description: description(),
-      files: ~w(lib assets mix.exs README.md guides),
+      files: ~w(lib assets mix.exs README.md CHANGELOG.md LICENSE guides examples),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]

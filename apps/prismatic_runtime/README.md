@@ -1,11 +1,98 @@
+<p align="center">
+  <img src="assets/prismatic.svg" alt="Prismatic" width="200"/>
+</p>
+
+<p align="center">
+  <a href="https://hex.pm/packages/prismatic"><img src="https://img.shields.io/hexpm/v/prismatic.svg" alt="Hex.pm"/></a>
+  <a href="https://hexdocs.pm/prismatic"><img src="https://img.shields.io/badge/hex-docs-blue.svg" alt="HexDocs"/></a>
+  <a href="https://github.com/nshkrdotcom/prismatic"><img src="https://img.shields.io/badge/GitHub-repo-black?logo=github" alt="GitHub"/></a>
+</p>
+
 # Prismatic
 
-Shared GraphQL runtime for `prismatic`-based provider SDKs.
+`Prismatic` is the shared GraphQL runtime package in the `prismatic` family.
 
-This package owns:
+It exists for thin, configuration-driven provider SDKs that need a stable,
+minimal GraphQL-over-HTTP foundation without dragging provider-specific logic
+into the runtime layer.
+
+## What this package owns
 
 - GraphQL-over-HTTP execution
 - auth and header composition
+- request payload normalization
 - response normalization
-- GraphQL and transport error shaping
-- lightweight telemetry hooks
+- transport, HTTP, and GraphQL error shaping
+- lightweight execution telemetry
+
+## What this package does not own
+
+- provider-specific operation catalogs
+- schema-derived code generation
+- provider artifact verification
+
+Those concerns stay in the sibling packages:
+
+- `prismatic_codegen`
+- `prismatic_provider_testkit`
+
+## Install
+
+```elixir
+def deps do
+  [
+    {:prismatic, "~> 0.1.0"}
+  ]
+end
+```
+
+## Create a client
+
+```elixir
+client =
+  Prismatic.Client.new!(
+    base_url: "https://api.example.com/graphql",
+    auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+  )
+```
+
+## Execute an operation
+
+```elixir
+operation =
+  Prismatic.Operation.new!(
+    id: "viewer",
+    name: "Viewer",
+    kind: :query,
+    document: "query Viewer { viewer { id name } }",
+    root_field: "viewer"
+  )
+
+{:ok, response} = Prismatic.Client.execute_operation(client, operation)
+```
+
+## Execute an ad hoc document
+
+```elixir
+{:ok, response} =
+  Prismatic.Client.execute_document(
+    client,
+    "query Viewer { viewer { id name } }"
+  )
+```
+
+## Docs Map
+
+- [Getting Started](guides/getting-started.md): install, client creation, and first execution
+- [Runtime Contract](guides/runtime-contract.md): public runtime boundary and expected provider usage
+- [Error Handling And Telemetry](guides/error-handling-and-telemetry.md): normalized failures and event emission
+- [Examples](examples/README.md): concise runtime-oriented snippets
+
+## Quality Bar
+
+```bash
+mix test
+mix credo --strict
+mix dialyzer --force-check
+mix docs
+```
