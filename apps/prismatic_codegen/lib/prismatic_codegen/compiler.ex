@@ -7,6 +7,7 @@ defmodule PrismaticCodegen.Compiler do
   alias PrismaticCodegen.Provider
   alias PrismaticCodegen.ProviderIR
   alias PrismaticCodegen.Render.ElixirSDK
+  alias PrismaticCodegen.Render.ElixirSDK.DocTree
   alias PrismaticCodegen.RenderedFile
   alias PrismaticCodegen.Source.Documents
   alias PrismaticCodegen.Source.Introspection
@@ -28,7 +29,7 @@ defmodule PrismaticCodegen.Compiler do
     enums = build_enums(provider, models, introspection)
     operations = attach_model_modules(operation_specs, models)
 
-    %ProviderIR{
+    ir = %ProviderIR{
       provider: %ProviderIR.Provider{
         name: provider.name,
         namespace: provider.namespace,
@@ -37,7 +38,7 @@ defmodule PrismaticCodegen.Compiler do
         auth: provider.auth,
         output: %{
           lib_root: provider.output.lib_root,
-          docs_path: provider.output.docs_path
+          docs_root: provider.output.docs_root
         }
       },
       schema: %{
@@ -47,24 +48,24 @@ defmodule PrismaticCodegen.Compiler do
       documents: documents,
       operations: operations,
       models: models,
-      enums: enums,
-      artifact_plan: %ProviderIR.ArtifactPlan{
-        files: build_artifact_plan(provider, operations, models, enums)
-      }
+      enums: enums
     }
+
+    %{ir | artifact_plan: %ProviderIR.ArtifactPlan{files: build_artifact_plan(ir)}}
   end
 
   @spec render!(Provider.t() | module() | String.t()) :: [PrismaticCodegen.RenderedFile.t()]
   def render!(provider) do
     provider
     |> compile!()
-    |> ElixirSDK.render()
+    |> then(fn ir -> ElixirSDK.render(ir) ++ DocTree.render(ir) end)
     |> Enum.map(&normalize_rendered_file/1)
   end
 
   @spec generate!(Provider.t() | module() | String.t()) :: :ok
   def generate!(provider) do
     provider = Provider.load!(provider)
+    prepare_output!(provider)
 
     render!(provider)
     |> Enum.each(fn file ->
@@ -158,14 +159,14 @@ defmodule PrismaticCodegen.Compiler do
     end)
   end
 
-  defp build_artifact_plan(provider, operations, models, enums) do
+  defp build_artifact_plan(%ProviderIR{} = ir) do
     [
-      namespace_root_path(provider)
-      | Enum.map(operations, &module_path(provider, &1.module))
+      namespace_root_path(ir.provider)
+      | Enum.map(ir.operations, &module_path(ir.provider, &1.module))
     ] ++
-      Enum.map(models, &module_path(provider, &1.module)) ++
-      Enum.map(enums, &module_path(provider, &1.module)) ++
-      [provider.output.docs_path]
+      Enum.map(ir.models, &module_path(ir.provider, &1.module)) ++
+      Enum.map(ir.enums, &module_path(ir.provider, &1.module)) ++
+      DocTree.artifact_paths(ir)
   end
 
   defp namespace_root_path(provider) do
@@ -196,6 +197,23 @@ defmodule PrismaticCodegen.Compiler do
 
       _other ->
         content
+        |> String.trim_trailing()
+        |> Kernel.<>("\n")
+    end
+  end
+
+  defp prepare_output!(provider) do
+    lib_root_path = Path.join(provider.output.root, provider.output.lib_root)
+    docs_root_path = Path.join(provider.output.root, provider.output.docs_root)
+    namespace_root = Path.join(provider.output.root, namespace_root_path(provider))
+
+    File.rm_rf!(lib_root_path)
+    File.rm_rf!(docs_root_path)
+
+    case File.rm(namespace_root) do
+      :ok -> :ok
+      {:error, :enoent} -> :ok
+      {:error, reason} -> raise File.Error, reason: reason, action: "remove", path: namespace_root
     end
   end
 end

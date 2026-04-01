@@ -84,9 +84,13 @@ operation =
 ## Docs Map
 
 - [Getting Started](guides/getting-started.md): install, client creation, and first execution
+- [Client Configuration](guides/client-configuration.md): base URL, auth, transport, and runtime options
 - [Runtime Contract](guides/runtime-contract.md): public runtime boundary and expected provider usage
 - [Error Handling And Telemetry](guides/error-handling-and-telemetry.md): normalized failures and event emission
 - [Examples](examples/README.md): concise runtime-oriented snippets
+- [Provider SDK Architecture](guides/developer/provider-sdk-architecture.md): package boundaries for provider authors
+- [Provider Testing And CI](guides/developer/provider-testing-and-ci.md): verification, mocks, and clean CI wiring
+- [Provider Docs And HexDocs](guides/developer/provider-docs-and-hexdocs.md): generated reference docs and HexDocs integration
 
 ## Quality Bar
 

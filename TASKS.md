@@ -46,4 +46,6 @@ Create `prismatic` as the GraphQL-native sibling to `pristine`:
 - 2026-04-01: Kept the repo fully provider-neutral while building the generator-first core and generic fixtures.
 - 2026-04-01: Fixed workspace test orchestration for shared build paths and removed the stale `uuid` dependency from the runtime package.
 - 2026-04-01: Implemented formatted Elixir artifact generation, artifact verification, and mix task support for `prismatic.codegen.ir`, `prismatic.codegen.generate`, and `prismatic.codegen.verify`.
+- 2026-04-01: Added generated markdown reference-doc rendering, managed generated-doc cleanup, and verification coverage for obsolete generated files.
+- 2026-04-01: Expanded the publishable `prismatic` package docs with generic client-configuration guidance and a dedicated `Developer Guides` section.
 - 2026-04-01: Verified `mix ci` passes cleanly across format, compile, tests, Credo, Dialyzer, and docs.

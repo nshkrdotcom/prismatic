@@ -67,16 +67,26 @@ defmodule Prismatic.Runtime.MixProject do
         "CHANGELOG.md",
         "LICENSE",
         "guides/getting-started.md",
+        "guides/client-configuration.md",
         "guides/runtime-contract.md",
         "guides/error-handling-and-telemetry.md",
+        "guides/developer/provider-sdk-architecture.md",
+        "guides/developer/provider-testing-and-ci.md",
+        "guides/developer/provider-docs-and-hexdocs.md",
         "examples/README.md"
       ],
       groups_for_extras: [
         Overview: ["README.md"],
-        Guides: [
+        "User Guides": [
           "guides/getting-started.md",
+          "guides/client-configuration.md",
           "guides/runtime-contract.md",
           "guides/error-handling-and-telemetry.md"
+        ],
+        "Developer Guides": [
+          "guides/developer/provider-sdk-architecture.md",
+          "guides/developer/provider-testing-and-ci.md",
+          "guides/developer/provider-docs-and-hexdocs.md"
         ],
         Examples: ["examples/README.md"],
         Project: ["CHANGELOG.md", "LICENSE"]
@@ -88,7 +98,7 @@ defmodule Prismatic.Runtime.MixProject do
     [
       name: "prismatic",
       description: description(),
-      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE),
+      files: ~w(lib assets guides examples mix.exs README.md CHANGELOG.md LICENSE),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]

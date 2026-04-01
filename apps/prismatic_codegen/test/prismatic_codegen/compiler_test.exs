@@ -41,7 +41,14 @@ defmodule PrismaticCodegen.CompilerTest do
     assert "lib/example_sdk/generated/operations/viewer.ex" in files
     assert "lib/example_sdk/generated/models/account.ex" in files
     assert "lib/example_sdk/generated/enums/account_status.ex" in files
-    assert "guides/generated-surface.md" in files
+    assert "guides/generated/README.md" in files
+    assert "guides/generated/provider.md" in files
+    assert "guides/generated/operations/README.md" in files
+    assert "guides/generated/operations/viewer.md" in files
+    assert "guides/generated/models/README.md" in files
+    assert "guides/generated/models/account.md" in files
+    assert "guides/generated/enums/README.md" in files
+    assert "guides/generated/enums/account_status.md" in files
   end
 
   test "renders operation module, model module, and docs artifact" do
@@ -53,7 +60,14 @@ defmodule PrismaticCodegen.CompilerTest do
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/operations/viewer.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/models/account.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/enums/account_status.ex")
-    assert Map.has_key?(rendered_map, "guides/generated-surface.md")
+    assert Map.has_key?(rendered_map, "guides/generated/README.md")
+    assert Map.has_key?(rendered_map, "guides/generated/provider.md")
+    assert Map.has_key?(rendered_map, "guides/generated/operations/README.md")
+    assert Map.has_key?(rendered_map, "guides/generated/operations/viewer.md")
+    assert Map.has_key?(rendered_map, "guides/generated/models/README.md")
+    assert Map.has_key?(rendered_map, "guides/generated/models/account.md")
+    assert Map.has_key?(rendered_map, "guides/generated/enums/README.md")
+    assert Map.has_key?(rendered_map, "guides/generated/enums/account_status.md")
 
     assert rendered_map["lib/example_sdk/generated/operations/viewer.ex"] =~
              "defmodule ExampleSDK.Generated.Operations.Viewer do"
@@ -64,11 +78,20 @@ defmodule PrismaticCodegen.CompilerTest do
     assert rendered_map["lib/example_sdk/generated/models/account.ex"] =~
              "defmodule ExampleSDK.Generated.Models.Account do"
 
-    assert rendered_map["guides/generated-surface.md"] =~
-             "# Generated Surface"
+    assert rendered_map["guides/generated/README.md"] =~
+             "# Generated Reference"
 
-    assert rendered_map["guides/generated-surface.md"] =~
-             "| Viewer | query | viewer | Account |"
+    assert rendered_map["guides/generated/provider.md"] =~
+             "https://api.example.com/graphql"
+
+    assert rendered_map["guides/generated/operations/viewer.md"] =~
+             "ExampleSDK.Generated.Operations.Viewer"
+
+    assert rendered_map["guides/generated/models/account.md"] =~
+             "| `status` | `:status` | `ENUM` | [`AccountStatus`](../enums/account_status.md) |"
+
+    assert rendered_map["guides/generated/enums/account_status.md"] =~
+             "`ACTIVE`"
 
     rendered_files
     |> Enum.reject(&(&1.kind == :docs))
@@ -97,6 +120,22 @@ defmodule PrismaticCodegen.CompilerTest do
     end
   end
 
+  test "verify reports unexpected generated files and generate prunes them" do
+    root = temp_root()
+    provider = fixture_provider(root)
+
+    assert :ok = Compiler.generate!(provider)
+
+    unexpected_path = Path.join(root, "guides/generated/operations/old.md")
+    File.mkdir_p!(Path.dirname(unexpected_path))
+    File.write!(unexpected_path, "obsolete")
+
+    assert "guides/generated/operations/old.md" in Verify.stale_files(provider)
+
+    assert :ok = Compiler.generate!(provider)
+    refute File.exists?(unexpected_path)
+  end
+
   defp rendered_file_map(rendered_files) do
     Map.new(rendered_files, fn file -> {file.path, file.content} end)
   end
@@ -117,7 +156,7 @@ defmodule PrismaticCodegen.CompilerTest do
       output: [
         root: root,
         lib_root: "lib/example_sdk/generated",
-        docs_path: "guides/generated-surface.md"
+        docs_root: "guides/generated"
       ]
     )
   end

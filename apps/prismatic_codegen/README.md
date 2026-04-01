@@ -7,4 +7,6 @@ This package owns:
 - provider definitions
 - GraphQL-native provider IR
 - compiler transforms
-- minimal renderer helpers
+- generated Elixir modules
+- generated markdown reference-doc trees
+- managed output verification inputs

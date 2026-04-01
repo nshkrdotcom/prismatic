@@ -1,7 +1,6 @@
 defmodule PrismaticProviderTestkit.ConformanceTest do
   use ExUnit.Case, async: true
 
-  alias Prismatic.Operation
   alias PrismaticCodegen.ProviderIR
   alias PrismaticProviderTestkit.Conformance
 
@@ -16,13 +15,7 @@ defmodule PrismaticProviderTestkit.ConformanceTest do
         %ProviderIR.Operation{
           id: "viewer",
           module: ExampleSDK.Operations.Viewer,
-          operation:
-            Operation.new!(
-              id: "viewer",
-              name: "Viewer",
-              kind: :query,
-              document: "query Viewer { viewer { id } }"
-            )
+          operation: %{id: "viewer", name: "Viewer"}
         }
       ]
     }

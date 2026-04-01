@@ -129,6 +129,7 @@ defmodule Prismatic.Workspace.MixProject do
 
   defp dialyzer do
     [
+      ignore_warnings: ".dialyzer_ignore.exs",
       plt_add_deps: :app_tree,
       plt_add_apps: [:mix, :blitz],
       plt_core_path: "_build/plts/core",

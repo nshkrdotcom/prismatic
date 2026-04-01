@@ -10,7 +10,7 @@ defmodule PrismaticCodegen.ProviderIR do
           operations: [PrismaticCodegen.ProviderIR.Operation.t()],
           models: [PrismaticCodegen.ProviderIR.Model.t()],
           enums: [PrismaticCodegen.ProviderIR.Enum.t()],
-          artifact_plan: PrismaticCodegen.ProviderIR.ArtifactPlan.t()
+          artifact_plan: PrismaticCodegen.ProviderIR.ArtifactPlan.t() | nil
         }
 
   defstruct provider: nil,
@@ -32,7 +32,7 @@ defmodule PrismaticCodegen.ProviderIR do
             client_module: module(),
             base_url: String.t(),
             auth: map(),
-            output: %{lib_root: Path.t(), docs_path: Path.t()}
+            output: %{lib_root: Path.t(), docs_root: Path.t()}
           }
 
     defstruct [:name, :namespace, :client_module, :base_url, auth: %{}, output: %{}]

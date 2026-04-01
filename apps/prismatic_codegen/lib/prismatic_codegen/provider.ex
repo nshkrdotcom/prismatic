@@ -27,11 +27,11 @@ defmodule PrismaticCodegen.Provider do
     @type t :: %__MODULE__{
             root: Path.t(),
             lib_root: Path.t(),
-            docs_path: Path.t()
+            docs_root: Path.t()
           }
 
-    @enforce_keys [:root, :lib_root, :docs_path]
-    defstruct [:root, :lib_root, :docs_path]
+    @enforce_keys [:root, :lib_root, :docs_root]
+    defstruct [:root, :lib_root, :docs_root]
   end
 
   @type t :: %__MODULE__{
@@ -67,7 +67,7 @@ defmodule PrismaticCodegen.Provider do
       keys: [
         root: [type: :string, required: true],
         lib_root: [type: :string, required: true],
-        docs_path: [type: :string, required: true]
+        docs_root: [type: :string, required: true]
       ]
     ]
   ]
@@ -88,7 +88,7 @@ defmodule PrismaticCodegen.Provider do
         output: %Output{
           root: validated[:output][:root],
           lib_root: validated[:output][:lib_root],
-          docs_path: validated[:output][:docs_path]
+          docs_root: validated[:output][:docs_root]
         }
       }
 
