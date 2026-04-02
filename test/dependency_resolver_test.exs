@@ -192,6 +192,7 @@ defmodule Prismatic.DependencyResolverTest do
     source =
       source_path
       |> File.read!()
+      |> maybe_replace_resolver_guard(opts)
       |> String.replace(
         "Code.require_file(\"../../build_support/dependency_resolver.exs\", __DIR__)",
         "Code.require_file(#{inspect(dependency_resolver_path)})",
@@ -218,6 +219,21 @@ defmodule Prismatic.DependencyResolverTest do
           source,
           "alias Prismatic.Build.DependencyResolver",
           "alias #{inspect(resolver_module)}, as: DependencyResolver",
+          global: false
+        )
+    end
+  end
+
+  defp maybe_replace_resolver_guard(source, opts) do
+    case opts[:resolver_module] do
+      nil ->
+        source
+
+      resolver_module ->
+        String.replace(
+          source,
+          "Code.ensure_loaded?(Prismatic.Build.DependencyResolver)",
+          "Code.ensure_loaded?(#{inspect(resolver_module)})",
           global: false
         )
     end
