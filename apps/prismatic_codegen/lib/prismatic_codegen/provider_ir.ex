@@ -29,6 +29,7 @@ defmodule PrismaticCodegen.ProviderIR do
     @type t :: %__MODULE__{
             name: String.t(),
             namespace: module(),
+            public_namespace: module(),
             client_module: module(),
             base_url: String.t(),
             auth: map(),
@@ -36,7 +37,16 @@ defmodule PrismaticCodegen.ProviderIR do
             output: %{lib_root: Path.t(), docs_root: Path.t()}
           }
 
-    defstruct [:name, :namespace, :client_module, :base_url, auth: %{}, source: %{}, output: %{}]
+    defstruct [
+      :name,
+      :namespace,
+      :public_namespace,
+      :client_module,
+      :base_url,
+      auth: %{},
+      source: %{},
+      output: %{}
+    ]
   end
 
   defmodule Document do

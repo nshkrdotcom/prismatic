@@ -66,6 +66,16 @@ defmodule PrismaticCodegen.CompilerTest do
     assert "guides/api/enums/account_status-enum.md" in files
     assert "guides/api/scalars.md" in files
     assert "guides/api/scalars/date_time-scalar.md" in files
+    assert "lib/example_sdk/queries.ex" in files
+    assert "lib/example_sdk/queries/viewer.ex" in files
+    assert "lib/example_sdk/mutations/update_viewer.ex" in files
+    assert "lib/example_sdk/subscriptions/account_updated.ex" in files
+    assert "lib/example_sdk/objects/account.ex" in files
+    assert "lib/example_sdk/inputs/viewer_input.ex" in files
+    assert "lib/example_sdk/interfaces/node.ex" in files
+    assert "lib/example_sdk/unions/search_result.ex" in files
+    assert "lib/example_sdk/enums/account_status.ex" in files
+    assert "lib/example_sdk/scalars/date_time.ex" in files
   end
 
   test "renders operation module, model module, and full schema docs artifact set" do
@@ -88,6 +98,11 @@ defmodule PrismaticCodegen.CompilerTest do
     assert Map.has_key?(rendered_map, "guides/api/unions/search_result-union.md")
     assert Map.has_key?(rendered_map, "guides/api/enums/account_status-enum.md")
     assert Map.has_key?(rendered_map, "guides/api/scalars/date_time-scalar.md")
+    assert Map.has_key?(rendered_map, "lib/example_sdk/queries.ex")
+    assert Map.has_key?(rendered_map, "lib/example_sdk/queries/viewer.ex")
+    assert Map.has_key?(rendered_map, "lib/example_sdk/objects/account.ex")
+    assert Map.has_key?(rendered_map, "lib/example_sdk/enums/account_status.ex")
+    assert Map.has_key?(rendered_map, "lib/example_sdk/scalars/date_time.ex")
 
     assert rendered_map["lib/example_sdk/generated/operations/viewer.ex"] =~
              "defmodule ExampleSDK.Generated.Operations.Viewer do"
@@ -97,6 +112,21 @@ defmodule PrismaticCodegen.CompilerTest do
 
     assert rendered_map["lib/example_sdk/generated/models/account.ex"] =~
              "defmodule ExampleSDK.Generated.Models.Account do"
+
+    assert rendered_map["lib/example_sdk/queries.ex"] =~
+             "defmodule ExampleSDK.Queries do"
+
+    assert rendered_map["lib/example_sdk/queries/viewer.ex"] =~
+             "defmodule ExampleSDK.Queries.Viewer do"
+
+    assert rendered_map["lib/example_sdk/queries/viewer.ex"] =~
+             "GraphQL query field `viewer`."
+
+    assert rendered_map["lib/example_sdk/objects/account.ex"] =~
+             "defmodule ExampleSDK.Objects.Account do"
+
+    assert rendered_map["lib/example_sdk/objects/account.ex"] =~
+             "GraphQL object `Account`."
 
     assert rendered_map["guides/api/graph-reference.md"] =~
              "# API Reference"

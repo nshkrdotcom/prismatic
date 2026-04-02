@@ -38,6 +38,7 @@ defmodule PrismaticCodegen.Provider do
   @type t :: %__MODULE__{
           name: String.t(),
           namespace: module(),
+          public_namespace: module(),
           client_module: module(),
           base_url: String.t(),
           auth: map(),
@@ -46,11 +47,21 @@ defmodule PrismaticCodegen.Provider do
         }
 
   @enforce_keys [:name, :namespace, :client_module, :base_url, :source, :output]
-  defstruct [:name, :namespace, :client_module, :base_url, auth: %{}, source: nil, output: nil]
+  defstruct [
+    :name,
+    :namespace,
+    :public_namespace,
+    :client_module,
+    :base_url,
+    auth: %{},
+    source: nil,
+    output: nil
+  ]
 
   @schema [
     name: [type: :string, required: true],
     namespace: [type: :atom, required: true],
+    public_namespace: [type: :atom, required: false],
     client_module: [type: :atom, required: true],
     base_url: [type: :string, required: true],
     auth: [type: :map, default: %{}],
@@ -80,6 +91,8 @@ defmodule PrismaticCodegen.Provider do
       provider = %__MODULE__{
         name: validated[:name],
         namespace: validated[:namespace],
+        public_namespace:
+          validated[:public_namespace] || infer_public_namespace(validated[:client_module]),
         client_module: validated[:client_module],
         base_url: validated[:base_url],
         auth: validated[:auth],
@@ -152,5 +165,12 @@ defmodule PrismaticCodegen.Provider do
       true ->
         {:ok, provider}
     end
+  end
+
+  defp infer_public_namespace(client_module) do
+    client_module
+    |> Module.split()
+    |> Enum.drop(-1)
+    |> Module.concat()
   end
 end

@@ -5,6 +5,7 @@ defmodule PrismaticCodegen.Verify do
 
   alias PrismaticCodegen.Compiler
   alias PrismaticCodegen.Provider
+  alias PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules
 
   @spec stale_files(Provider.t() | module() | String.t()) :: [Path.t()]
   def stale_files(provider) do
@@ -50,10 +51,13 @@ defmodule PrismaticCodegen.Verify do
     lib_dir = Path.join(root, provider.output.lib_root)
     docs_dir = Path.join(root, provider.output.docs_root)
     namespace_root = Path.join(root, "#{provider.output.lib_root}.ex")
+    public_managed_roots = PublicSchemaModules.managed_roots(provider)
 
     [
       namespace_root
-      | managed_directory_files(lib_dir) ++ managed_directory_files(docs_dir)
+      | managed_directory_files(lib_dir) ++
+          managed_directory_files(docs_dir) ++
+          managed_public_files(root, public_managed_roots)
     ]
     |> Enum.filter(&File.regular?/1)
     |> Enum.map(&Path.relative_to(&1, root))
@@ -65,5 +69,17 @@ defmodule PrismaticCodegen.Verify do
     |> Path.join("**/*")
     |> Path.wildcard()
     |> Enum.filter(&File.regular?/1)
+  end
+
+  defp managed_public_files(root, managed_roots) do
+    Enum.flat_map(managed_roots, fn relative_path ->
+      path = Path.join(root, relative_path)
+
+      cond do
+        File.regular?(path) -> [path]
+        File.dir?(path) -> managed_directory_files(path)
+        true -> []
+      end
+    end)
   end
 end

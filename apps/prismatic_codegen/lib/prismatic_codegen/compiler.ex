@@ -8,6 +8,7 @@ defmodule PrismaticCodegen.Compiler do
   alias PrismaticCodegen.ProviderIR
   alias PrismaticCodegen.Render.ElixirSDK
   alias PrismaticCodegen.Render.ElixirSDK.DocTree
+  alias PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules
   alias PrismaticCodegen.RenderedFile
   alias PrismaticCodegen.Source.Documents
   alias PrismaticCodegen.Source.Introspection
@@ -34,6 +35,7 @@ defmodule PrismaticCodegen.Compiler do
       provider: %ProviderIR.Provider{
         name: provider.name,
         namespace: provider.namespace,
+        public_namespace: provider.public_namespace,
         client_module: provider.client_module,
         base_url: provider.base_url,
         auth: provider.auth,
@@ -60,7 +62,9 @@ defmodule PrismaticCodegen.Compiler do
   def render!(provider) do
     provider
     |> compile!()
-    |> then(fn ir -> ElixirSDK.render(ir) ++ DocTree.render(ir) end)
+    |> then(fn ir ->
+      ElixirSDK.render(ir) ++ DocTree.render(ir) ++ PublicSchemaModules.render(ir)
+    end)
     |> Enum.map(&normalize_rendered_file/1)
   end
 
@@ -238,7 +242,8 @@ defmodule PrismaticCodegen.Compiler do
     ] ++
       Enum.map(ir.models, &module_path(ir.provider, &1.module)) ++
       Enum.map(ir.enums, &module_path(ir.provider, &1.module)) ++
-      DocTree.artifact_paths(ir)
+      DocTree.artifact_paths(ir) ++
+      PublicSchemaModules.artifact_paths(ir)
   end
 
   defp namespace_root_path(provider) do
@@ -278,9 +283,20 @@ defmodule PrismaticCodegen.Compiler do
     lib_root_path = Path.join(provider.output.root, provider.output.lib_root)
     docs_root_path = Path.join(provider.output.root, provider.output.docs_root)
     namespace_root = Path.join(provider.output.root, namespace_root_path(provider))
+    public_managed_roots = PublicSchemaModules.managed_roots(provider)
 
     File.rm_rf!(lib_root_path)
     File.rm_rf!(docs_root_path)
+
+    Enum.each(public_managed_roots, fn path ->
+      full_path = Path.join(provider.output.root, path)
+
+      cond do
+        File.dir?(full_path) -> File.rm_rf!(full_path)
+        File.regular?(full_path) -> File.rm!(full_path)
+        true -> :ok
+      end
+    end)
 
     case File.rm(namespace_root) do
       :ok -> :ok
