@@ -33,7 +33,7 @@ defmodule Prismatic.DependencyResolverTest do
   test "publishing commands skip workspace paths" do
     System.argv(["hex.build"])
 
-    assert {:prismatic, "~> 0.1.1", []} = DependencyResolver.prismatic_runtime()
+    assert {:prismatic, "~> 0.2.0", []} = DependencyResolver.prismatic_runtime()
 
     assert {:prismatic_codegen, opts} = DependencyResolver.prismatic_codegen()
     assert opts[:github] == "nshkrdotcom/prismatic"
@@ -64,7 +64,7 @@ defmodule Prismatic.DependencyResolverTest do
     System.argv(["hex.build"])
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
-    assert {:prismatic, "~> 0.1.1"} = find_dependency!(probe_module.project()[:deps], :prismatic)
+    assert {:prismatic, "~> 0.2.0"} = find_dependency!(probe_module.project()[:deps], :prismatic)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -95,7 +95,7 @@ defmodule Prismatic.DependencyResolverTest do
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
-    assert {:prismatic_codegen, "~> 0.1.1"} =
+    assert {:prismatic_codegen, "~> 0.2.0"} =
              find_dependency!(probe_module.project()[:deps], :prismatic_codegen)
 
     on_exit(fn ->

@@ -5,7 +5,7 @@ defmodule Prismatic.Codegen.MixProject do
 
   alias Prismatic.Build.DependencyResolver
 
-  @version "0.1.1"
+  @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
 
   def project do
@@ -47,7 +47,7 @@ defmodule Prismatic.Codegen.MixProject do
 
   defp prismatic_runtime_dep do
     if publishing_package?() or installing_as_dependency?() do
-      {:prismatic, "~> 0.1.1"}
+      {:prismatic, "~> 0.2.0"}
     else
       DependencyResolver.prismatic_runtime()
     end

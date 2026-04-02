@@ -1,7 +1,7 @@
 defmodule Prismatic.Workspace.MixProject do
   use Mix.Project
 
-  @version "0.1.1"
+  @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
   @workspace_packages [
     prismatic: "apps/prismatic_runtime",

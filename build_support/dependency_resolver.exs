@@ -6,7 +6,7 @@ defmodule Prismatic.Build.DependencyResolver do
 
   def prismatic_runtime(opts \\ []) do
     case workspace_path(["apps/prismatic_runtime"]) do
-      nil -> {:prismatic, "~> 0.1.1", opts}
+      nil -> {:prismatic, "~> 0.2.0", opts}
       path -> {:prismatic, Keyword.merge([path: path], opts)}
     end
   end
