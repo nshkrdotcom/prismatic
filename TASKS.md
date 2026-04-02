@@ -48,4 +48,6 @@ Create `prismatic` as the GraphQL-native sibling to `pristine`:
 - 2026-04-01: Implemented formatted Elixir artifact generation, artifact verification, and mix task support for `prismatic.codegen.ir`, `prismatic.codegen.generate`, and `prismatic.codegen.verify`.
 - 2026-04-01: Added generated markdown reference-doc rendering, managed generated-doc cleanup, and verification coverage for obsolete generated files.
 - 2026-04-01: Expanded the publishable `prismatic` package docs with generic client-configuration guidance and a dedicated `Developer Guides` section.
+- 2026-04-01: Evolved `prismatic_codegen` from a small generated-reference renderer to a full schema-reference generator that can publish an upstream GraphQL graph through provider HexDocs extras.
+- 2026-04-01: Added provider-author guidance for vendored `schema.json` / `schema.graphql` inputs, schema-centric public docs under `guides/api/`, and public-doc cleanup expectations.
 - 2026-04-01: Verified `mix ci` passes cleanly across format, compile, tests, Credo, Dialyzer, and docs.

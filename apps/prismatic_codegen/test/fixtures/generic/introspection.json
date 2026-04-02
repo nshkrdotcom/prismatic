@@ -4,36 +4,327 @@
       "queryType": {
         "name": "Query"
       },
-      "mutationType": null,
+      "mutationType": {
+        "name": "Mutation"
+      },
+      "subscriptionType": {
+        "name": "Subscription"
+      },
       "types": [
         {
           "kind": "SCALAR",
           "name": "ID",
-          "description": null,
+          "description": "Built-in identifier scalar.",
           "fields": null,
           "inputFields": null,
           "interfaces": null,
           "enumValues": null,
-          "possibleTypes": null
+          "possibleTypes": null,
+          "specifiedByURL": null
         },
         {
           "kind": "SCALAR",
           "name": "String",
-          "description": null,
+          "description": "Built-in string scalar.",
           "fields": null,
           "inputFields": null,
           "interfaces": null,
           "enumValues": null,
-          "possibleTypes": null
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "description": "Built-in boolean scalar.",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "SCALAR",
+          "name": "DateTime",
+          "description": "An ISO8601 timestamp.",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": "https://example.com/scalars/datetime"
+        },
+        {
+          "kind": "INTERFACE",
+          "name": "Node",
+          "description": "A globally identifiable entity.",
+          "fields": [
+            {
+              "name": "id",
+              "description": "Stable identifier.",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": [
+            {
+              "kind": "OBJECT",
+              "name": "Account",
+              "ofType": null
+            },
+            {
+              "kind": "OBJECT",
+              "name": "Project",
+              "ofType": null
+            }
+          ],
+          "specifiedByURL": null
+        },
+        {
+          "kind": "ENUM",
+          "name": "AccountStatus",
+          "description": "Possible lifecycle states for an account.",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": [
+            {
+              "name": "ACTIVE",
+              "description": "The account is active.",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "PAUSED",
+              "description": "The account is paused.",
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "LEGACY",
+              "description": "Legacy status retained for old clients.",
+              "isDeprecated": true,
+              "deprecationReason": "Use PAUSED instead."
+            }
+          ],
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "INPUT_OBJECT",
+          "name": "ViewerInput",
+          "description": "Input payload for updating the viewer.",
+          "fields": null,
+          "inputFields": [
+            {
+              "name": "name",
+              "description": "Updated display name.",
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "defaultValue": null,
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "status",
+              "description": "Updated lifecycle state.",
+              "type": {
+                "kind": "ENUM",
+                "name": "AccountStatus",
+                "ofType": null
+              },
+              "defaultValue": "ACTIVE",
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "UNION",
+          "name": "SearchResult",
+          "description": "Objects that can appear in search results.",
+          "fields": null,
+          "inputFields": null,
+          "interfaces": null,
+          "enumValues": null,
+          "possibleTypes": [
+            {
+              "kind": "OBJECT",
+              "name": "Account",
+              "ofType": null
+            },
+            {
+              "kind": "OBJECT",
+              "name": "Project",
+              "ofType": null
+            }
+          ],
+          "specifiedByURL": null
         },
         {
           "kind": "OBJECT",
           "name": "Query",
-          "description": null,
+          "description": "Query root.",
           "fields": [
             {
+              "name": "_dummy",
+              "description": "Internal placeholder field.",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
               "name": "viewer",
-              "description": null,
+              "description": "Fetch the authenticated account.",
+              "args": [
+                {
+                  "name": "accountId",
+                  "description": "Optional explicit account id.",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "ID",
+                    "ofType": null
+                  },
+                  "defaultValue": null,
+                  "isDeprecated": false,
+                  "deprecationReason": null
+                },
+                {
+                  "name": "includeLegacy",
+                  "description": "Whether to include legacy handles.",
+                  "type": {
+                    "kind": "SCALAR",
+                    "name": "Boolean",
+                    "ofType": null
+                  },
+                  "defaultValue": "false",
+                  "isDeprecated": false,
+                  "deprecationReason": null
+                }
+              ],
+              "type": {
+                "kind": "OBJECT",
+                "name": "Account",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "search",
+              "description": "Search accounts and projects.",
+              "args": [
+                {
+                  "name": "term",
+                  "description": "Free-text search term.",
+                  "type": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "SCALAR",
+                      "name": "String",
+                      "ofType": null
+                    }
+                  },
+                  "defaultValue": null,
+                  "isDeprecated": false,
+                  "deprecationReason": null
+                }
+              ],
+              "type": {
+                "kind": "LIST",
+                "name": null,
+                "ofType": {
+                  "kind": "UNION",
+                  "name": "SearchResult",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "Mutation",
+          "description": "Mutation root.",
+          "fields": [
+            {
+              "name": "updateViewer",
+              "description": "Update the authenticated account.",
+              "args": [
+                {
+                  "name": "input",
+                  "description": "Mutation input.",
+                  "type": {
+                    "kind": "NON_NULL",
+                    "name": null,
+                    "ofType": {
+                      "kind": "INPUT_OBJECT",
+                      "name": "ViewerInput",
+                      "ofType": null
+                    }
+                  },
+                  "defaultValue": null,
+                  "isDeprecated": false,
+                  "deprecationReason": null
+                }
+              ],
+              "type": {
+                "kind": "OBJECT",
+                "name": "Account",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [],
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "Subscription",
+          "description": "Subscription root.",
+          "fields": [
+            {
+              "name": "accountUpdated",
+              "description": "Watch for account updates.",
               "args": [],
               "type": {
                 "kind": "OBJECT",
@@ -47,16 +338,17 @@
           "inputFields": null,
           "interfaces": [],
           "enumValues": null,
-          "possibleTypes": null
+          "possibleTypes": null,
+          "specifiedByURL": null
         },
         {
           "kind": "OBJECT",
-          "name": "Account",
-          "description": "A generic account",
+          "name": "Project",
+          "description": "A project in the workspace.",
           "fields": [
             {
               "name": "id",
-              "description": null,
+              "description": "Stable identifier.",
               "args": [],
               "type": {
                 "kind": "NON_NULL",
@@ -72,7 +364,69 @@
             },
             {
               "name": "name",
-              "description": null,
+              "description": "Project name.",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "String",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "updatedAt",
+              "description": "Last update timestamp.",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "DateTime",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            }
+          ],
+          "inputFields": null,
+          "interfaces": [
+            {
+              "kind": "INTERFACE",
+              "name": "Node",
+              "ofType": null
+            }
+          ],
+          "enumValues": null,
+          "possibleTypes": null,
+          "specifiedByURL": null
+        },
+        {
+          "kind": "OBJECT",
+          "name": "Account",
+          "description": "A generic account.",
+          "fields": [
+            {
+              "name": "id",
+              "description": "Stable identifier.",
+              "args": [],
+              "type": {
+                "kind": "NON_NULL",
+                "name": null,
+                "ofType": {
+                  "kind": "SCALAR",
+                  "name": "ID",
+                  "ofType": null
+                }
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "name",
+              "description": "Display name.",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -84,7 +438,7 @@
             },
             {
               "name": "email",
-              "description": null,
+              "description": "Email address.",
               "args": [],
               "type": {
                 "kind": "SCALAR",
@@ -96,7 +450,7 @@
             },
             {
               "name": "status",
-              "description": null,
+              "description": "Lifecycle state.",
               "args": [],
               "type": {
                 "kind": "ENUM",
@@ -105,41 +459,43 @@
               },
               "isDeprecated": false,
               "deprecationReason": null
+            },
+            {
+              "name": "project",
+              "description": "Primary project.",
+              "args": [],
+              "type": {
+                "kind": "OBJECT",
+                "name": "Project",
+                "ofType": null
+              },
+              "isDeprecated": false,
+              "deprecationReason": null
+            },
+            {
+              "name": "legacyHandle",
+              "description": "Legacy user handle.",
+              "args": [],
+              "type": {
+                "kind": "SCALAR",
+                "name": "String",
+                "ofType": null
+              },
+              "isDeprecated": true,
+              "deprecationReason": "Use name instead."
             }
           ],
           "inputFields": null,
-          "interfaces": [],
+          "interfaces": [
+            {
+              "kind": "INTERFACE",
+              "name": "Node",
+              "ofType": null
+            }
+          ],
           "enumValues": null,
-          "possibleTypes": null
-        },
-        {
-          "kind": "ENUM",
-          "name": "AccountStatus",
-          "description": null,
-          "fields": null,
-          "inputFields": null,
-          "interfaces": null,
-          "enumValues": [
-            {
-              "name": "ACTIVE",
-              "description": null,
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "PAUSED",
-              "description": null,
-              "isDeprecated": false,
-              "deprecationReason": null
-            },
-            {
-              "name": "DISABLED",
-              "description": null,
-              "isDeprecated": false,
-              "deprecationReason": null
-            }
-          ],
-          "possibleTypes": null
+          "possibleTypes": null,
+          "specifiedByURL": null
         }
       ]
     }

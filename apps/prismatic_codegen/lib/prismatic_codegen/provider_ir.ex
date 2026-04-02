@@ -5,7 +5,7 @@ defmodule PrismaticCodegen.ProviderIR do
 
   @type t :: %__MODULE__{
           provider: PrismaticCodegen.ProviderIR.Provider.t(),
-          schema: map(),
+          schema: PrismaticCodegen.ProviderIR.Schema.t(),
           documents: [PrismaticCodegen.ProviderIR.Document.t()],
           operations: [PrismaticCodegen.ProviderIR.Operation.t()],
           models: [PrismaticCodegen.ProviderIR.Model.t()],
@@ -32,10 +32,11 @@ defmodule PrismaticCodegen.ProviderIR do
             client_module: module(),
             base_url: String.t(),
             auth: map(),
+            source: %{introspection_path: Path.t(), schema_sdl_path: Path.t()},
             output: %{lib_root: Path.t(), docs_root: Path.t()}
           }
 
-    defstruct [:name, :namespace, :client_module, :base_url, auth: %{}, output: %{}]
+    defstruct [:name, :namespace, :client_module, :base_url, auth: %{}, source: %{}, output: %{}]
   end
 
   defmodule Document do
@@ -127,5 +128,120 @@ defmodule PrismaticCodegen.ProviderIR do
           }
 
     defstruct files: []
+  end
+
+  defmodule Schema do
+    @moduledoc """
+    Full schema metadata compiled from the introspection snapshot.
+    """
+
+    @type t :: %__MODULE__{
+            query_type_name: String.t(),
+            mutation_type_name: String.t() | nil,
+            subscription_type_name: String.t() | nil,
+            types: [PrismaticCodegen.ProviderIR.Schema.Type.t()]
+          }
+
+    defstruct [:query_type_name, :mutation_type_name, :subscription_type_name, types: []]
+
+    defmodule Type do
+      @moduledoc """
+      Schema type entry.
+      """
+
+      @type t :: %__MODULE__{
+              kind: String.t(),
+              name: String.t(),
+              description: String.t() | nil,
+              fields: [PrismaticCodegen.ProviderIR.Schema.Field.t()],
+              input_fields: [PrismaticCodegen.ProviderIR.Schema.InputValue.t()],
+              interfaces: [PrismaticCodegen.ProviderIR.Schema.TypeRef.t()],
+              enum_values: [PrismaticCodegen.ProviderIR.Schema.EnumValue.t()],
+              possible_types: [PrismaticCodegen.ProviderIR.Schema.TypeRef.t()],
+              specified_by_url: String.t() | nil
+            }
+
+      defstruct [
+        :kind,
+        :name,
+        :description,
+        :specified_by_url,
+        fields: [],
+        input_fields: [],
+        interfaces: [],
+        enum_values: [],
+        possible_types: []
+      ]
+    end
+
+    defmodule Field do
+      @moduledoc """
+      Field metadata for object and interface types.
+      """
+
+      @type t :: %__MODULE__{
+              name: String.t(),
+              description: String.t() | nil,
+              args: [PrismaticCodegen.ProviderIR.Schema.InputValue.t()],
+              type: PrismaticCodegen.ProviderIR.Schema.TypeRef.t(),
+              is_deprecated: boolean(),
+              deprecation_reason: String.t() | nil
+            }
+
+      defstruct [:name, :description, :type, :is_deprecated, :deprecation_reason, args: []]
+    end
+
+    defmodule InputValue do
+      @moduledoc """
+      Argument or input-field metadata.
+      """
+
+      @type t :: %__MODULE__{
+              name: String.t(),
+              description: String.t() | nil,
+              type: PrismaticCodegen.ProviderIR.Schema.TypeRef.t(),
+              default_value: String.t() | nil,
+              is_deprecated: boolean(),
+              deprecation_reason: String.t() | nil
+            }
+
+      defstruct [
+        :name,
+        :description,
+        :type,
+        :default_value,
+        :is_deprecated,
+        :deprecation_reason
+      ]
+    end
+
+    defmodule EnumValue do
+      @moduledoc """
+      Enum-value metadata.
+      """
+
+      @type t :: %__MODULE__{
+              name: String.t(),
+              description: String.t() | nil,
+              is_deprecated: boolean(),
+              deprecation_reason: String.t() | nil
+            }
+
+      defstruct [:name, :description, :is_deprecated, :deprecation_reason]
+    end
+
+    defmodule TypeRef do
+      @moduledoc """
+      Recursive GraphQL type reference.
+      """
+
+      @type t :: %__MODULE__{
+              kind: String.t(),
+              name: String.t() | nil,
+              of_type: t() | nil
+            }
+
+      defstruct [:kind, :name, :of_type]
+    end
   end
 end

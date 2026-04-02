@@ -11,10 +11,11 @@ defmodule PrismaticCodegen.Source.Introspection do
     @type t :: %__MODULE__{
             query_type_name: String.t(),
             mutation_type_name: String.t() | nil,
+            subscription_type_name: String.t() | nil,
             types: %{String.t() => map()}
           }
 
-    defstruct [:query_type_name, :mutation_type_name, types: %{}]
+    defstruct [:query_type_name, :mutation_type_name, :subscription_type_name, types: %{}]
   end
 
   @spec load!(Path.t()) :: Snapshot.t()
@@ -28,6 +29,7 @@ defmodule PrismaticCodegen.Source.Introspection do
     %Snapshot{
       query_type_name: get_in(schema, ["queryType", "name"]),
       mutation_type_name: get_in(schema, ["mutationType", "name"]),
+      subscription_type_name: get_in(schema, ["subscriptionType", "name"]),
       types:
         schema
         |> Map.fetch!("types")
@@ -63,6 +65,11 @@ defmodule PrismaticCodegen.Source.Introspection do
   def named_type(%{name: name, kind: kind}) when is_binary(name), do: %{kind: kind, name: name}
   def named_type(%{of_type: of_type}), do: named_type(of_type)
 
+  @spec type_signature(map()) :: String.t()
+  def type_signature(%{kind: "NON_NULL", of_type: of_type}), do: type_signature(of_type) <> "!"
+  def type_signature(%{kind: "LIST", of_type: of_type}), do: "[" <> type_signature(of_type) <> "]"
+  def type_signature(%{name: name}) when is_binary(name), do: name
+
   defp extract_schema!(%{"data" => %{"__schema" => schema}}), do: schema
   defp extract_schema!(%{"__schema" => schema}), do: schema
 
@@ -75,16 +82,32 @@ defmodule PrismaticCodegen.Source.Introspection do
       kind: type["kind"],
       name: type["name"],
       description: type["description"],
+      specified_by_url: type["specifiedByURL"],
       fields:
         type
         |> Map.get("fields", [])
         |> List.wrap()
         |> Enum.map(&normalize_field/1),
+      input_fields:
+        type
+        |> Map.get("inputFields", [])
+        |> List.wrap()
+        |> Enum.map(&normalize_input_value/1),
+      interfaces:
+        type
+        |> Map.get("interfaces", [])
+        |> List.wrap()
+        |> Enum.map(&normalize_type_ref/1),
       enum_values:
         type
         |> Map.get("enumValues", [])
         |> List.wrap()
-        |> Enum.map(& &1["name"])
+        |> Enum.map(&normalize_enum_value/1),
+      possible_types:
+        type
+        |> Map.get("possibleTypes", [])
+        |> List.wrap()
+        |> Enum.map(&normalize_type_ref/1)
     }
   end
 
@@ -92,7 +115,34 @@ defmodule PrismaticCodegen.Source.Introspection do
     %{
       name: field["name"],
       description: field["description"],
-      type: normalize_type_ref(field["type"])
+      args:
+        field
+        |> Map.get("args", [])
+        |> List.wrap()
+        |> Enum.map(&normalize_input_value/1),
+      type: normalize_type_ref(field["type"]),
+      is_deprecated: field["isDeprecated"] || false,
+      deprecation_reason: field["deprecationReason"]
+    }
+  end
+
+  defp normalize_input_value(input_value) do
+    %{
+      name: input_value["name"],
+      description: input_value["description"],
+      type: normalize_type_ref(input_value["type"]),
+      default_value: input_value["defaultValue"],
+      is_deprecated: input_value["isDeprecated"] || false,
+      deprecation_reason: input_value["deprecationReason"]
+    }
+  end
+
+  defp normalize_enum_value(enum_value) do
+    %{
+      name: enum_value["name"],
+      description: enum_value["description"],
+      is_deprecated: enum_value["isDeprecated"] || false,
+      deprecation_reason: enum_value["deprecationReason"]
     }
   end
 

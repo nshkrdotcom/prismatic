@@ -28,6 +28,7 @@ defmodule PrismaticCodegen.Compiler do
     models = build_models(provider, operation_specs, introspection)
     enums = build_enums(provider, models, introspection)
     operations = attach_model_modules(operation_specs, models)
+    schema = build_schema(introspection)
 
     ir = %ProviderIR{
       provider: %ProviderIR.Provider{
@@ -36,15 +37,16 @@ defmodule PrismaticCodegen.Compiler do
         client_module: provider.client_module,
         base_url: provider.base_url,
         auth: provider.auth,
+        source: %{
+          introspection_path: provider.source.introspection_path,
+          schema_sdl_path: provider.source.schema_sdl_path
+        },
         output: %{
           lib_root: provider.output.lib_root,
           docs_root: provider.output.docs_root
         }
       },
-      schema: %{
-        query_type_name: introspection.query_type_name,
-        mutation_type_name: introspection.mutation_type_name
-      },
+      schema: schema,
       documents: documents,
       operations: operations,
       models: models,
@@ -146,9 +148,79 @@ defmodule PrismaticCodegen.Compiler do
       %ProviderIR.Enum{
         name: type_name,
         module: Module.concat([provider.namespace, "Enums", type_name]),
-        values: type.enum_values
+        values: Enum.map(type.enum_values, & &1.name)
       }
     end)
+  end
+
+  defp build_schema(%Introspection.Snapshot{} = snapshot) do
+    %ProviderIR.Schema{
+      query_type_name: snapshot.query_type_name,
+      mutation_type_name: snapshot.mutation_type_name,
+      subscription_type_name: snapshot.subscription_type_name,
+      types:
+        snapshot.types
+        |> Map.values()
+        |> Enum.map(&build_schema_type/1)
+        |> Enum.sort_by(& &1.name)
+    }
+  end
+
+  defp build_schema_type(type) do
+    %ProviderIR.Schema.Type{
+      kind: type.kind,
+      name: type.name,
+      description: type.description,
+      specified_by_url: type.specified_by_url,
+      fields: Enum.map(type.fields, &build_schema_field/1),
+      input_fields: Enum.map(type.input_fields, &build_schema_input_value/1),
+      interfaces: Enum.map(type.interfaces, &build_schema_type_ref/1),
+      enum_values: Enum.map(type.enum_values, &build_schema_enum_value/1),
+      possible_types: Enum.map(type.possible_types, &build_schema_type_ref/1)
+    }
+  end
+
+  defp build_schema_field(field) do
+    %ProviderIR.Schema.Field{
+      name: field.name,
+      description: field.description,
+      args: Enum.map(field.args, &build_schema_input_value/1),
+      type: build_schema_type_ref(field.type),
+      is_deprecated: field.is_deprecated,
+      deprecation_reason: field.deprecation_reason
+    }
+  end
+
+  defp build_schema_input_value(input_value) do
+    %ProviderIR.Schema.InputValue{
+      name: input_value.name,
+      description: input_value.description,
+      type: build_schema_type_ref(input_value.type),
+      default_value: input_value.default_value,
+      is_deprecated: input_value.is_deprecated,
+      deprecation_reason: input_value.deprecation_reason
+    }
+  end
+
+  defp build_schema_enum_value(enum_value) do
+    %ProviderIR.Schema.EnumValue{
+      name: enum_value.name,
+      description: enum_value.description,
+      is_deprecated: enum_value.is_deprecated,
+      deprecation_reason: enum_value.deprecation_reason
+    }
+  end
+
+  defp build_schema_type_ref(type_ref) do
+    %ProviderIR.Schema.TypeRef{
+      kind: type_ref.kind,
+      name: type_ref.name,
+      of_type:
+        case type_ref.of_type do
+          nil -> nil
+          nested -> build_schema_type_ref(nested)
+        end
+    }
   end
 
   defp attach_model_modules(operations, models) do

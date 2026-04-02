@@ -12,11 +12,12 @@ defmodule PrismaticCodegen.Provider do
 
     @type t :: %__MODULE__{
             introspection_path: Path.t(),
+            schema_sdl_path: Path.t(),
             documents_root: Path.t()
           }
 
-    @enforce_keys [:introspection_path, :documents_root]
-    defstruct [:introspection_path, :documents_root]
+    @enforce_keys [:introspection_path, :schema_sdl_path, :documents_root]
+    defstruct [:introspection_path, :schema_sdl_path, :documents_root]
   end
 
   defmodule Output do
@@ -58,6 +59,7 @@ defmodule PrismaticCodegen.Provider do
       required: true,
       keys: [
         introspection_path: [type: :string, required: true],
+        schema_sdl_path: [type: :string, required: true],
         documents_root: [type: :string, required: true]
       ]
     ],
@@ -83,6 +85,7 @@ defmodule PrismaticCodegen.Provider do
         auth: validated[:auth],
         source: %Source{
           introspection_path: validated[:source][:introspection_path],
+          schema_sdl_path: validated[:source][:schema_sdl_path],
           documents_root: validated[:source][:documents_root]
         },
         output: %Output{
@@ -137,6 +140,10 @@ defmodule PrismaticCodegen.Provider do
          ArgumentError.exception(
            "missing introspection file: #{provider.source.introspection_path}"
          )}
+
+      not File.regular?(provider.source.schema_sdl_path) ->
+        {:error,
+         ArgumentError.exception("missing schema SDL file: #{provider.source.schema_sdl_path}")}
 
       not File.dir?(provider.source.documents_root) ->
         {:error,

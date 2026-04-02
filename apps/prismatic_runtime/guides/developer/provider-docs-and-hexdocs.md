@@ -9,6 +9,7 @@ Keep these handwritten:
 - package README
 - getting-started guide
 - client-configuration guide
+- document-execution guide
 - generation and upstream-artifact guide
 
 These explain provider-specific workflow and ergonomics.
@@ -17,14 +18,15 @@ These explain provider-specific workflow and ergonomics.
 
 Generate these from `prismatic_codegen`:
 
-- provider overview
-- operations index and per-operation pages
-- models index and per-model pages
-- enums index and per-enum pages
+- schema-reference landing page
+- queries index and per-query-field pages
+- mutations index and per-mutation-field pages
+- subscriptions index and per-subscription-field pages
+- object, input-object, interface, union, enum, and scalar reference pages
 
-Reserve a dedicated subtree for generated reference docs:
+Reserve a dedicated subtree for generated schema-reference docs:
 
-- `guides/generated/`
+- `guides/api/`
 
 That makes cleanup, verification, and HexDocs inclusion deterministic.
 
@@ -37,16 +39,16 @@ Typical menu shape:
 
 - `Overview`
 - `User Guides`
-- `Generated Reference`
+- `API Reference`
 - `Examples`
 - `Project`
 
-The generated reference section should point directly at the committed markdown
-files under `guides/generated/`.
+The API reference section should point directly at the committed markdown files
+under `guides/api/`.
 
 ## Why This Split Matters
 
 It keeps provider repos thin while still giving users professional docs:
 
 - curated human guides where judgement matters
-- generated reference where structure and completeness matter
+- generated schema reference where structure and completeness matter

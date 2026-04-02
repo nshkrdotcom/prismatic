@@ -92,9 +92,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
 
     """
     defmodule #{inspect(operation.module)} do
-      @moduledoc \"\"\"
-      Generated #{operation.operation.kind} operation for the `#{operation.document.root_field}` root field.
-      \"\"\"
+      @moduledoc false
 
       #{aliases}
 
@@ -130,9 +128,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
 
     """
     defmodule #{inspect(model.module)} do
-      @moduledoc \"\"\"
-      Generated model for the `#{model.name}` GraphQL object type.
-      \"\"\"
+      @moduledoc false
 
       defstruct [#{keys}]
 
@@ -163,9 +159,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
 
     """
     defmodule #{inspect(enum.module)} do
-      @moduledoc \"\"\"
-      Generated enum for the `#{enum.name}` GraphQL enum type.
-      \"\"\"
+      @moduledoc false
 
       @values [#{values}]
 
@@ -184,9 +178,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
 
     """
     defmodule #{inspect(ir.provider.namespace)} do
-      @moduledoc \"\"\"
-      Inventory of generated operations, models, and enums for this provider SDK.
-      \"\"\"
+      @moduledoc false
 
       @operations [#{operations}]
       @models [#{models}]

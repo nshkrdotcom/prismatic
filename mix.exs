@@ -162,7 +162,7 @@ defmodule Prismatic.Workspace.MixProject do
         deps_path: false,
         build_path: false,
         lockfile: false,
-        hex_home: Path.join(__DIR__, "_build/hex"),
+        hex_home: Path.expand("_build/hex", __DIR__),
         unset_env: ["HEX_API_KEY"]
       ],
       parallelism: [

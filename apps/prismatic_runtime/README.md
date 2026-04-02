@@ -90,7 +90,8 @@ operation =
 - [Examples](examples/examples.md): concise runtime-oriented snippets
 - [Provider SDK Architecture](guides/developer/provider-sdk-architecture.md): package boundaries for provider authors
 - [Provider Testing And CI](guides/developer/provider-testing-and-ci.md): verification, mocks, and clean CI wiring
-- [Provider Docs And HexDocs](guides/developer/provider-docs-and-hexdocs.md): generated reference docs and HexDocs integration
+- [Provider Docs And HexDocs](guides/developer/provider-docs-and-hexdocs.md): schema reference docs and HexDocs integration
+- [Provider Schema Reference Generation](guides/developer/provider-schema-reference-generation.md): vendored schema artifacts, generator inputs, and public-doc surface design
 
 ## Quality Bar
 

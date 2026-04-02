@@ -26,12 +26,14 @@ Provider SDKs built on `prismatic` should keep a strict package split.
 
 Provider SDK repos should own:
 
-- committed introspection artifacts
+- committed upstream schema artifacts
+- committed schema SDL artifacts when available
 - curated GraphQL documents
 - base URL and auth metadata
 - a thin provider definition module
 - thin handwritten client wrapper defaults
 - a small set of handwritten user guides
+- a generated schema-reference doc tree
 
 ## What Should Stay Out Of Provider Repos
 
@@ -39,6 +41,7 @@ Do not handwrite large resource surfaces if the operation can be generated from:
 
 - curated GraphQL documents
 - schema snapshot
+- schema SDL
 - provider metadata
 
 That work should be pushed back into `prismatic_codegen`.

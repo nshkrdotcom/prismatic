@@ -1,0 +1,47 @@
+interface Node {
+  id: ID!
+}
+
+enum AccountStatus {
+  ACTIVE
+  PAUSED
+  LEGACY
+}
+
+scalar DateTime @specifiedBy(url: "https://example.com/scalars/datetime")
+
+input ViewerInput {
+  name: String
+  status: AccountStatus = ACTIVE
+}
+
+type Project implements Node {
+  id: ID!
+  name: String!
+  updatedAt: DateTime
+}
+
+type Account implements Node {
+  id: ID!
+  name: String
+  email: String
+  status: AccountStatus
+  project: Project
+  legacyHandle: String @deprecated(reason: "Use name instead.")
+}
+
+union SearchResult = Account | Project
+
+type Query {
+  _dummy: String
+  viewer(accountId: ID, includeLegacy: Boolean = false): Account
+  search(term: String!): [SearchResult]
+}
+
+type Mutation {
+  updateViewer(input: ViewerInput!): Account
+}
+
+type Subscription {
+  accountUpdated: Account
+}

@@ -35,23 +35,40 @@ defmodule PrismaticCodegen.CompilerTest do
                  module: ExampleSDK.Generated.Enums.AccountStatus
                }
              ],
+             schema: %ProviderIR.Schema{
+               query_type_name: "Query",
+               mutation_type_name: "Mutation",
+               subscription_type_name: "Subscription"
+             },
              artifact_plan: %ProviderIR.ArtifactPlan{files: files}
            } = Compiler.compile!(provider)
 
     assert "lib/example_sdk/generated/operations/viewer.ex" in files
     assert "lib/example_sdk/generated/models/account.ex" in files
     assert "lib/example_sdk/generated/enums/account_status.ex" in files
-    assert "guides/generated/generated-reference.md" in files
-    assert "guides/generated/provider-overview.md" in files
-    assert "guides/generated/operations/operations-reference.md" in files
-    assert "guides/generated/operations/viewer-operation.md" in files
-    assert "guides/generated/models/models-reference.md" in files
-    assert "guides/generated/models/account-model.md" in files
-    assert "guides/generated/enums/enums-reference.md" in files
-    assert "guides/generated/enums/account_status-enum.md" in files
+    assert "guides/api/graph-reference.md" in files
+    assert "guides/api/queries.md" in files
+    assert "guides/api/queries/viewer-query.md" in files
+    assert "guides/api/mutations.md" in files
+    assert "guides/api/mutations/update_viewer-mutation.md" in files
+    assert "guides/api/subscriptions.md" in files
+    assert "guides/api/subscriptions/account_updated-subscription.md" in files
+    assert "guides/api/objects.md" in files
+    assert "guides/api/objects/account-object.md" in files
+    assert "guides/api/objects/project-object.md" in files
+    assert "guides/api/input-objects.md" in files
+    assert "guides/api/input-objects/viewer_input-input.md" in files
+    assert "guides/api/interfaces.md" in files
+    assert "guides/api/interfaces/node-interface.md" in files
+    assert "guides/api/unions.md" in files
+    assert "guides/api/unions/search_result-union.md" in files
+    assert "guides/api/enums.md" in files
+    assert "guides/api/enums/account_status-enum.md" in files
+    assert "guides/api/scalars.md" in files
+    assert "guides/api/scalars/date_time-scalar.md" in files
   end
 
-  test "renders operation module, model module, and docs artifact" do
+  test "renders operation module, model module, and full schema docs artifact set" do
     provider = fixture_provider(temp_root())
     ir = Compiler.compile!(provider)
     rendered_files = Compiler.render!(provider)
@@ -60,14 +77,17 @@ defmodule PrismaticCodegen.CompilerTest do
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/operations/viewer.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/models/account.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/enums/account_status.ex")
-    assert Map.has_key?(rendered_map, "guides/generated/generated-reference.md")
-    assert Map.has_key?(rendered_map, "guides/generated/provider-overview.md")
-    assert Map.has_key?(rendered_map, "guides/generated/operations/operations-reference.md")
-    assert Map.has_key?(rendered_map, "guides/generated/operations/viewer-operation.md")
-    assert Map.has_key?(rendered_map, "guides/generated/models/models-reference.md")
-    assert Map.has_key?(rendered_map, "guides/generated/models/account-model.md")
-    assert Map.has_key?(rendered_map, "guides/generated/enums/enums-reference.md")
-    assert Map.has_key?(rendered_map, "guides/generated/enums/account_status-enum.md")
+    assert Map.has_key?(rendered_map, "guides/api/graph-reference.md")
+    assert Map.has_key?(rendered_map, "guides/api/queries.md")
+    assert Map.has_key?(rendered_map, "guides/api/queries/viewer-query.md")
+    assert Map.has_key?(rendered_map, "guides/api/mutations/update_viewer-mutation.md")
+    assert Map.has_key?(rendered_map, "guides/api/subscriptions/account_updated-subscription.md")
+    assert Map.has_key?(rendered_map, "guides/api/objects/account-object.md")
+    assert Map.has_key?(rendered_map, "guides/api/input-objects/viewer_input-input.md")
+    assert Map.has_key?(rendered_map, "guides/api/interfaces/node-interface.md")
+    assert Map.has_key?(rendered_map, "guides/api/unions/search_result-union.md")
+    assert Map.has_key?(rendered_map, "guides/api/enums/account_status-enum.md")
+    assert Map.has_key?(rendered_map, "guides/api/scalars/date_time-scalar.md")
 
     assert rendered_map["lib/example_sdk/generated/operations/viewer.ex"] =~
              "defmodule ExampleSDK.Generated.Operations.Viewer do"
@@ -78,20 +98,35 @@ defmodule PrismaticCodegen.CompilerTest do
     assert rendered_map["lib/example_sdk/generated/models/account.ex"] =~
              "defmodule ExampleSDK.Generated.Models.Account do"
 
-    assert rendered_map["guides/generated/generated-reference.md"] =~
-             "# Generated Reference"
+    assert rendered_map["guides/api/graph-reference.md"] =~
+             "# API Reference"
 
-    assert rendered_map["guides/generated/provider-overview.md"] =~
-             "https://api.example.com/graphql"
+    assert rendered_map["guides/api/graph-reference.md"] =~
+             "schema.graphql"
 
-    assert rendered_map["guides/generated/operations/viewer-operation.md"] =~
-             "ExampleSDK.Generated.Operations.Viewer"
+    assert rendered_map["guides/api/queries/viewer-query.md"] =~
+             "Fetch the authenticated account."
 
-    assert rendered_map["guides/generated/models/account-model.md"] =~
-             "| `status` | `:status` | `ENUM` | [`AccountStatus`](../enums/account_status-enum.md) |"
+    assert rendered_map["guides/api/queries/viewer-query.md"] =~
+             "[`Account`](../objects/account-object.md)"
 
-    assert rendered_map["guides/generated/enums/account_status-enum.md"] =~
-             "`ACTIVE`"
+    assert rendered_map["guides/api/objects/account-object.md"] =~
+             "[`Project`](project-object.md)"
+
+    assert rendered_map["guides/api/input-objects/viewer_input-input.md"] =~
+             "ACTIVE"
+
+    assert rendered_map["guides/api/interfaces/node-interface.md"] =~
+             "[`Account`](../objects/account-object.md)"
+
+    assert rendered_map["guides/api/unions/search_result-union.md"] =~
+             "[`Project`](../objects/project-object.md)"
+
+    assert rendered_map["guides/api/enums/account_status-enum.md"] =~
+             "Use PAUSED instead."
+
+    assert rendered_map["guides/api/scalars/date_time-scalar.md"] =~
+             "https://example.com/scalars/datetime"
 
     rendered_files
     |> Enum.reject(&(&1.kind == :docs))
@@ -126,11 +161,11 @@ defmodule PrismaticCodegen.CompilerTest do
 
     assert :ok = Compiler.generate!(provider)
 
-    unexpected_path = Path.join(root, "guides/generated/operations/old-operation.md")
+    unexpected_path = Path.join(root, "guides/api/queries/old-query.md")
     File.mkdir_p!(Path.dirname(unexpected_path))
     File.write!(unexpected_path, "obsolete")
 
-    assert "guides/generated/operations/old-operation.md" in Verify.stale_files(provider)
+    assert "guides/api/queries/old-query.md" in Verify.stale_files(provider)
 
     assert :ok = Compiler.generate!(provider)
     refute File.exists?(unexpected_path)
@@ -151,12 +186,13 @@ defmodule PrismaticCodegen.CompilerTest do
       auth: %{type: :bearer},
       source: [
         introspection_path: Path.join(fixture_root, "introspection.json"),
+        schema_sdl_path: Path.join(fixture_root, "schema.graphql"),
         documents_root: Path.join(fixture_root, "documents")
       ],
       output: [
         root: root,
         lib_root: "lib/example_sdk/generated",
-        docs_root: "guides/generated"
+        docs_root: "guides/api"
       ]
     )
   end
