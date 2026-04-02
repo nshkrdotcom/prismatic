@@ -42,7 +42,7 @@ Those concerns stay in the sibling packages:
 ```elixir
 def deps do
   [
-    {:prismatic, "~> 0.1.0"}
+    {:prismatic, "~> 0.1.1"}
   ]
 end
 ```

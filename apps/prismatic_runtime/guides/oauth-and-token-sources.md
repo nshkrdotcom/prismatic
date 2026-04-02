@@ -8,6 +8,7 @@ their provider metadata, scope defaults, and user-facing onboarding guidance.
 - generic OAuth2 provider metadata
 - authorization URL helpers
 - code exchange, refresh, and client-credentials helpers
+- interactive browser and loopback callback orchestration
 - persisted token file support
 - refreshable token-source wrappers
 - runtime-side OAuth bearer injection through `oauth2:`
@@ -96,3 +97,17 @@ end
 ```
 
 That keeps the runtime generic and the provider repo explicit.
+
+## Interactive Authorization
+
+When a provider SDK wants operator-facing OAuth flows, it can use
+`Prismatic.OAuth2.Interactive.authorize/2` with a provider definition and a
+registered redirect URI.
+
+For loopback redirects like `http://127.0.0.1:40071/callback`, the interactive
+helper can capture the callback directly. For hosted redirects or manual flows,
+it falls back to paste-back mode.
+
+Exact loopback capture depends on the optional callback-listener dependencies
+being present in the install graph. Without them, the interactive helper still
+works, but it falls back to manual paste-back.

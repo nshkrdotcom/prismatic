@@ -1,7 +1,7 @@
 defmodule Prismatic.Workspace.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.1.1"
   @source_url "https://github.com/nshkrdotcom/prismatic"
   @workspace_packages [
     prismatic: "apps/prismatic_runtime",
@@ -37,6 +37,7 @@ defmodule Prismatic.Workspace.MixProject do
     [
       {:blitz, "~> 0.1.0", runtime: false},
       workspace_package_deps(),
+      {:plug, "~> 1.19", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.2", only: :test, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -131,7 +132,7 @@ defmodule Prismatic.Workspace.MixProject do
     [
       ignore_warnings: ".dialyzer_ignore.exs",
       plt_add_deps: :app_tree,
-      plt_add_apps: [:mix, :blitz],
+      plt_add_apps: [:mix, :blitz, :plug],
       plt_core_path: "_build/plts/core",
       paths: workspace_dialyzer_paths()
     ]
@@ -162,7 +163,7 @@ defmodule Prismatic.Workspace.MixProject do
         deps_path: false,
         build_path: false,
         lockfile: false,
-        hex_home: Path.expand("_build/hex", __DIR__),
+        hex_home: "_build/hex",
         unset_env: ["HEX_API_KEY"]
       ],
       parallelism: [

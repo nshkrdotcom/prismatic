@@ -31,6 +31,7 @@ GraphQL provider SDKs tend to accumulate the same infrastructure:
 
 - HTTP execution and auth handling
 - generic OAuth2 and token-source support
+- interactive OAuth browser and loopback callback support
 - response and error normalization
 - pagination and connection traversal
 - schema-driven code generation

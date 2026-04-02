@@ -5,7 +5,7 @@ defmodule Prismatic.ProviderTestkit.MixProject do
 
   alias Prismatic.Build.DependencyResolver
 
-  @version "0.1.0"
+  @version "0.1.1"
   @source_url "https://github.com/nshkrdotcom/prismatic"
 
   def project do
@@ -36,11 +36,19 @@ defmodule Prismatic.ProviderTestkit.MixProject do
 
   defp deps do
     [
-      DependencyResolver.prismatic_codegen(),
+      prismatic_codegen_dep(),
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false}
     ]
+  end
+
+  defp prismatic_codegen_dep do
+    if publishing_package?() or installing_as_dependency?() do
+      {:prismatic_codegen, "~> 0.1.1"}
+    else
+      DependencyResolver.prismatic_codegen()
+    end
   end
 
   defp description do
@@ -79,5 +87,11 @@ defmodule Prismatic.ProviderTestkit.MixProject do
       plt_add_apps: [:mix, :ex_unit],
       plt_core_path: "../../_build/plts/core"
     ]
+  end
+
+  defp publishing_package?, do: Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
+
+  defp installing_as_dependency? do
+    Enum.member?(Path.split(__DIR__), "deps")
   end
 end
