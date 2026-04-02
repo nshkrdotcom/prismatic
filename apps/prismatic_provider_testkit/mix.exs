@@ -44,7 +44,7 @@ defmodule Prismatic.ProviderTestkit.MixProject do
   end
 
   defp prismatic_codegen_dep do
-    if publishing_package?() or installing_as_dependency?() do
+    if publishing_package?() or installing_from_hex_package?() do
       {:prismatic_codegen, "~> 0.2.0"}
     else
       DependencyResolver.prismatic_codegen()
@@ -91,7 +91,13 @@ defmodule Prismatic.ProviderTestkit.MixProject do
 
   defp publishing_package?, do: Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
 
-  defp installing_as_dependency? do
-    Enum.member?(Path.split(__DIR__), "deps")
+  defp installing_from_hex_package? do
+    installing_as_dependency?() and not git_checkout_dependency?()
+  end
+
+  defp installing_as_dependency?, do: Enum.member?(Path.split(__DIR__), "deps")
+
+  defp git_checkout_dependency? do
+    File.exists?(Path.expand("../../.git", __DIR__))
   end
 end
