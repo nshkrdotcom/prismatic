@@ -47,3 +47,20 @@ operation =
     "query Viewer { viewer { id name } }"
   )
 ```
+
+## Select An Operation From A Multi-Operation Document
+
+```elixir
+document = """
+query Viewer { viewer { id name } }
+mutation UpdateViewer { viewerUpdate(input: {name: "Ada"}) { success } }
+"""
+
+{:ok, response} =
+  Prismatic.Client.execute_document(
+    client,
+    document,
+    %{},
+    operation_name: "Viewer"
+  )
+```

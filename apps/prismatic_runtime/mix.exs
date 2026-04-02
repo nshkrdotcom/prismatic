@@ -100,7 +100,7 @@ defmodule Prismatic.Runtime.MixProject do
     [
       name: "prismatic",
       description: description(),
-      files: ~w(lib assets guides examples mix.exs README.md CHANGELOG.md LICENSE),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]

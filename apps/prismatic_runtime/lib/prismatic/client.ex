@@ -5,6 +5,7 @@ defmodule Prismatic.Client do
 
   alias Prismatic.Context
   alias Prismatic.Error
+  alias Prismatic.GraphQL.Document
   alias Prismatic.Headers
   alias Prismatic.Operation
   alias Prismatic.Response
@@ -40,43 +41,67 @@ defmodule Prismatic.Client do
         variables \\ %{},
         opts \\ []
       ) do
-    payload = %{
-      "query" => operation.document,
-      "variables" => variables,
-      "operationName" => operation.name
-    }
-
     metadata = %{
       base_url: context.base_url,
       operation: operation.name,
       kind: operation.kind
     }
 
+    execute_payload(
+      context,
+      build_payload(operation.document, variables, operation.name),
+      metadata,
+      opts
+    )
+  end
+
+  @spec execute_document(t(), String.t(), map(), keyword()) ::
+          {:ok, Response.t()} | {:error, Error.t()}
+  def execute_document(client, document, variables \\ %{}, opts \\ []) when is_binary(document) do
+    selected_operation = Document.select_operation!(document, Keyword.get(opts, :operation_name))
+
+    metadata = %{
+      base_url: client.context.base_url,
+      operation: selected_operation.name,
+      kind: selected_operation.kind
+    }
+
+    execute_payload(
+      client.context,
+      build_payload(document, variables, selected_operation.name),
+      metadata,
+      opts
+    )
+  end
+
+  defp with_auth_headers(%Context{} = context) do
+    %{context | headers: Headers.merge_auth(context.headers, context.auth)}
+  end
+
+  defp execute_payload(%Context{} = context, payload, metadata, opts) do
     Telemetry.span(context.telemetry_prefix, metadata, fn ->
-      case context.transport.execute(context, payload, opts) do
+      case context.transport.execute(context, payload, transport_opts(opts)) do
         {:ok, raw_response} -> normalize_response(raw_response)
         {:error, reason} -> {:error, transport_error(reason)}
       end
     end)
   end
 
-  @spec execute_document(t(), String.t(), map(), keyword()) ::
-          {:ok, Response.t()} | {:error, Error.t()}
-  def execute_document(client, document, variables \\ %{}, opts \\ []) when is_binary(document) do
-    operation =
-      Operation.new!(
-        id: "ad_hoc_query",
-        name: "AdHocQuery",
-        kind: :query,
-        document: document
-      )
-
-    execute_operation(client, operation, variables, opts)
+  defp build_payload(document, variables, operation_name) do
+    %{
+      "query" => document,
+      "variables" => variables
+    }
+    |> maybe_put_operation_name(operation_name)
   end
 
-  defp with_auth_headers(%Context{} = context) do
-    %{context | headers: Headers.merge_auth(context.headers, context.auth)}
+  defp maybe_put_operation_name(payload, operation_name) when is_binary(operation_name) do
+    Map.put(payload, "operationName", operation_name)
   end
+
+  defp maybe_put_operation_name(payload, nil), do: payload
+
+  defp transport_opts(opts), do: Keyword.drop(opts, [:operation_name])
 
   defp normalize_response(%{status: status, headers: headers, body: body}) do
     request_id = header_value(headers, "x-request-id")

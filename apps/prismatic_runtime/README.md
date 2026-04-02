@@ -81,6 +81,24 @@ operation =
   )
 ```
 
+For documents that declare more than one operation, select the operation
+explicitly:
+
+```elixir
+document = """
+query Viewer { viewer { id name } }
+mutation UpdateViewer { viewerUpdate(input: {name: "Ada"}) { success } }
+"""
+
+{:ok, response} =
+  Prismatic.Client.execute_document(
+    client,
+    document,
+    %{},
+    operation_name: "Viewer"
+  )
+```
+
 ## Docs Map
 
 - [Getting Started](guides/getting-started.md): install, client creation, and first execution
