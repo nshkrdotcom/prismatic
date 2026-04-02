@@ -41,14 +41,14 @@ defmodule PrismaticCodegen.CompilerTest do
     assert "lib/example_sdk/generated/operations/viewer.ex" in files
     assert "lib/example_sdk/generated/models/account.ex" in files
     assert "lib/example_sdk/generated/enums/account_status.ex" in files
-    assert "guides/generated/README.md" in files
-    assert "guides/generated/provider.md" in files
-    assert "guides/generated/operations/README.md" in files
-    assert "guides/generated/operations/viewer.md" in files
-    assert "guides/generated/models/README.md" in files
-    assert "guides/generated/models/account.md" in files
-    assert "guides/generated/enums/README.md" in files
-    assert "guides/generated/enums/account_status.md" in files
+    assert "guides/generated/generated-reference.md" in files
+    assert "guides/generated/provider-overview.md" in files
+    assert "guides/generated/operations/operations-reference.md" in files
+    assert "guides/generated/operations/viewer-operation.md" in files
+    assert "guides/generated/models/models-reference.md" in files
+    assert "guides/generated/models/account-model.md" in files
+    assert "guides/generated/enums/enums-reference.md" in files
+    assert "guides/generated/enums/account_status-enum.md" in files
   end
 
   test "renders operation module, model module, and docs artifact" do
@@ -60,14 +60,14 @@ defmodule PrismaticCodegen.CompilerTest do
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/operations/viewer.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/models/account.ex")
     assert Map.has_key?(rendered_map, "lib/example_sdk/generated/enums/account_status.ex")
-    assert Map.has_key?(rendered_map, "guides/generated/README.md")
-    assert Map.has_key?(rendered_map, "guides/generated/provider.md")
-    assert Map.has_key?(rendered_map, "guides/generated/operations/README.md")
-    assert Map.has_key?(rendered_map, "guides/generated/operations/viewer.md")
-    assert Map.has_key?(rendered_map, "guides/generated/models/README.md")
-    assert Map.has_key?(rendered_map, "guides/generated/models/account.md")
-    assert Map.has_key?(rendered_map, "guides/generated/enums/README.md")
-    assert Map.has_key?(rendered_map, "guides/generated/enums/account_status.md")
+    assert Map.has_key?(rendered_map, "guides/generated/generated-reference.md")
+    assert Map.has_key?(rendered_map, "guides/generated/provider-overview.md")
+    assert Map.has_key?(rendered_map, "guides/generated/operations/operations-reference.md")
+    assert Map.has_key?(rendered_map, "guides/generated/operations/viewer-operation.md")
+    assert Map.has_key?(rendered_map, "guides/generated/models/models-reference.md")
+    assert Map.has_key?(rendered_map, "guides/generated/models/account-model.md")
+    assert Map.has_key?(rendered_map, "guides/generated/enums/enums-reference.md")
+    assert Map.has_key?(rendered_map, "guides/generated/enums/account_status-enum.md")
 
     assert rendered_map["lib/example_sdk/generated/operations/viewer.ex"] =~
              "defmodule ExampleSDK.Generated.Operations.Viewer do"
@@ -78,19 +78,19 @@ defmodule PrismaticCodegen.CompilerTest do
     assert rendered_map["lib/example_sdk/generated/models/account.ex"] =~
              "defmodule ExampleSDK.Generated.Models.Account do"
 
-    assert rendered_map["guides/generated/README.md"] =~
+    assert rendered_map["guides/generated/generated-reference.md"] =~
              "# Generated Reference"
 
-    assert rendered_map["guides/generated/provider.md"] =~
+    assert rendered_map["guides/generated/provider-overview.md"] =~
              "https://api.example.com/graphql"
 
-    assert rendered_map["guides/generated/operations/viewer.md"] =~
+    assert rendered_map["guides/generated/operations/viewer-operation.md"] =~
              "ExampleSDK.Generated.Operations.Viewer"
 
-    assert rendered_map["guides/generated/models/account.md"] =~
-             "| `status` | `:status` | `ENUM` | [`AccountStatus`](../enums/account_status.md) |"
+    assert rendered_map["guides/generated/models/account-model.md"] =~
+             "| `status` | `:status` | `ENUM` | [`AccountStatus`](../enums/account_status-enum.md) |"
 
-    assert rendered_map["guides/generated/enums/account_status.md"] =~
+    assert rendered_map["guides/generated/enums/account_status-enum.md"] =~
              "`ACTIVE`"
 
     rendered_files
@@ -126,11 +126,11 @@ defmodule PrismaticCodegen.CompilerTest do
 
     assert :ok = Compiler.generate!(provider)
 
-    unexpected_path = Path.join(root, "guides/generated/operations/old.md")
+    unexpected_path = Path.join(root, "guides/generated/operations/old-operation.md")
     File.mkdir_p!(Path.dirname(unexpected_path))
     File.write!(unexpected_path, "obsolete")
 
-    assert "guides/generated/operations/old.md" in Verify.stale_files(provider)
+    assert "guides/generated/operations/old-operation.md" in Verify.stale_files(provider)
 
     assert :ok = Compiler.generate!(provider)
     refute File.exists?(unexpected_path)

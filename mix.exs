@@ -162,14 +162,14 @@ defmodule Prismatic.Workspace.MixProject do
         deps_path: false,
         build_path: false,
         lockfile: false,
-        hex_home: "_build/hex",
+        hex_home: Path.join(__DIR__, "_build/hex"),
         unset_env: ["HEX_API_KEY"]
       ],
       parallelism: [
         env: "PRISMATIC_MONOREPO_MAX_CONCURRENCY",
         multiplier: :auto,
         base: [
-          deps_get: 3,
+          deps_get: 1,
           format: 4,
           compile: 2,
           test: 1,
@@ -177,7 +177,13 @@ defmodule Prismatic.Workspace.MixProject do
           dialyzer: 1,
           docs: 1
         ],
-        overrides: []
+        overrides: [
+          deps_get: 1,
+          compile: 1,
+          test: 1,
+          credo: 1,
+          docs: 1
+        ]
       ],
       tasks: [
         deps_get: [args: ["deps.get"], preflight?: false],

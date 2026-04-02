@@ -73,7 +73,7 @@ defmodule Prismatic.Runtime.MixProject do
         "guides/developer/provider-sdk-architecture.md",
         "guides/developer/provider-testing-and-ci.md",
         "guides/developer/provider-docs-and-hexdocs.md",
-        "examples/README.md"
+        "examples/examples.md"
       ],
       groups_for_extras: [
         Overview: ["README.md"],
@@ -88,7 +88,7 @@ defmodule Prismatic.Runtime.MixProject do
           "guides/developer/provider-testing-and-ci.md",
           "guides/developer/provider-docs-and-hexdocs.md"
         ],
-        Examples: ["examples/README.md"],
+        Examples: ["examples/examples.md"],
         Project: ["CHANGELOG.md", "LICENSE"]
       ]
     ]

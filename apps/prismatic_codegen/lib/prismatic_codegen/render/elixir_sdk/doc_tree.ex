@@ -9,7 +9,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.DocTree do
   @spec render(ProviderIR.t()) :: [RenderedFile.t()]
   def render(%ProviderIR{} = ir) do
     [
-      docs_file(ir, docs_root_readme_path(ir), render_root_readme(ir)),
+      docs_file(ir, generated_reference_path(ir), render_root_readme(ir)),
       docs_file(ir, provider_overview_path(ir), render_provider_overview(ir)),
       docs_file(ir, operations_index_path(ir), render_operations_index(ir))
     ] ++
@@ -30,7 +30,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.DocTree do
   @spec artifact_paths(ProviderIR.t()) :: [Path.t()]
   def artifact_paths(%ProviderIR{} = ir) do
     [
-      docs_root_readme_path(ir),
+      generated_reference_path(ir),
       provider_overview_path(ir),
       operations_index_path(ir)
     ] ++
@@ -64,10 +64,10 @@ defmodule PrismaticCodegen.Render.ElixirSDK.DocTree do
 
     ## Contents
 
-    - [Provider Overview](provider.md)
-    - [Operations](operations/README.md) (#{length(ir.operations)})
-    - [Models](models/README.md) (#{length(ir.models)})
-    - [Enums](enums/README.md) (#{length(ir.enums)})
+    - [Provider Overview](provider-overview.md)
+    - [Operations](operations/operations-reference.md) (#{length(ir.operations)})
+    - [Models](models/models-reference.md) (#{length(ir.models)})
+    - [Enums](enums/enums-reference.md) (#{length(ir.enums)})
     """
     |> String.trim()
   end
@@ -279,35 +279,43 @@ defmodule PrismaticCodegen.Render.ElixirSDK.DocTree do
     end
   end
 
-  defp docs_root_readme_path(%ProviderIR{} = ir) do
-    Path.join(ir.provider.output.docs_root, "README.md")
+  defp generated_reference_path(%ProviderIR{} = ir) do
+    Path.join(ir.provider.output.docs_root, "generated-reference.md")
   end
 
   defp provider_overview_path(%ProviderIR{} = ir) do
-    Path.join(ir.provider.output.docs_root, "provider.md")
+    Path.join(ir.provider.output.docs_root, "provider-overview.md")
   end
 
   defp operations_index_path(%ProviderIR{} = ir) do
-    Path.join([ir.provider.output.docs_root, "operations", "README.md"])
+    Path.join([ir.provider.output.docs_root, "operations", "operations-reference.md"])
   end
 
   defp operation_path(%ProviderIR{} = ir, %ProviderIR.Operation{} = operation) do
-    Path.join([ir.provider.output.docs_root, "operations", "#{operation.id}.md"])
+    Path.join([ir.provider.output.docs_root, "operations", "#{operation.id}-operation.md"])
   end
 
   defp models_index_path(%ProviderIR{} = ir) do
-    Path.join([ir.provider.output.docs_root, "models", "README.md"])
+    Path.join([ir.provider.output.docs_root, "models", "models-reference.md"])
   end
 
   defp model_path(%ProviderIR{} = ir, %ProviderIR.Model{} = model) do
-    Path.join([ir.provider.output.docs_root, "models", "#{Macro.underscore(model.name)}.md"])
+    Path.join([
+      ir.provider.output.docs_root,
+      "models",
+      "#{Macro.underscore(model.name)}-model.md"
+    ])
   end
 
   defp enums_index_path(%ProviderIR{} = ir) do
-    Path.join([ir.provider.output.docs_root, "enums", "README.md"])
+    Path.join([ir.provider.output.docs_root, "enums", "enums-reference.md"])
   end
 
   defp enum_path(%ProviderIR{} = ir, %ProviderIR.Enum{} = enum) do
-    Path.join([ir.provider.output.docs_root, "enums", "#{Macro.underscore(enum.name)}.md"])
+    Path.join([
+      ir.provider.output.docs_root,
+      "enums",
+      "#{Macro.underscore(enum.name)}-enum.md"
+    ])
   end
 end
