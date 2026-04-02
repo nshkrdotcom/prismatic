@@ -20,6 +20,7 @@ into the runtime layer.
 
 - GraphQL-over-HTTP execution
 - auth and header composition
+- OAuth2 helpers and token-source resolution
 - request payload normalization
 - response normalization
 - transport, HTTP, and GraphQL error shaping
@@ -53,6 +54,20 @@ client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
     auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+  )
+```
+
+Or create a client that resolves a persisted OAuth token at execution time:
+
+```elixir
+client =
+  Prismatic.Client.new!(
+    base_url: "https://api.example.com/graphql",
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: "/tmp/provider-oauth.json"}
+    ]
   )
 ```
 
@@ -103,6 +118,7 @@ mutation UpdateViewer { viewerUpdate(input: {name: "Ada"}) { success } }
 
 - [Getting Started](guides/getting-started.md): install, client creation, and first execution
 - [Client Configuration](guides/client-configuration.md): base URL, auth, transport, and runtime options
+- [OAuth And Token Sources](guides/oauth-and-token-sources.md): generic OAuth2 helpers, file-backed tokens, and refreshable sources
 - [Runtime Contract](guides/runtime-contract.md): public runtime boundary and expected provider usage
 - [Error Handling And Telemetry](guides/error-handling-and-telemetry.md): normalized failures and event emission
 - [Examples](examples/examples.md): concise runtime-oriented snippets

@@ -21,7 +21,7 @@ defmodule Prismatic.Client do
   @spec new(keyword()) :: {:ok, t()} | {:error, Exception.t()}
   def new(opts) do
     with {:ok, context} <- Context.new(opts) do
-      {:ok, %__MODULE__{context: with_auth_headers(context)}}
+      {:ok, %__MODULE__{context: context}}
     end
   end
 
@@ -74,14 +74,14 @@ defmodule Prismatic.Client do
     )
   end
 
-  defp with_auth_headers(%Context{} = context) do
-    %{context | headers: Headers.merge_auth(context.headers, context.auth)}
-  end
-
   defp execute_payload(%Context{} = context, payload, metadata, opts) do
     Telemetry.span(context.telemetry_prefix, metadata, fn ->
-      case context.transport.execute(context, payload, transport_opts(opts)) do
-        {:ok, raw_response} -> normalize_response(raw_response)
+      with {:ok, resolved_context} <- resolve_context_auth(context),
+           {:ok, raw_response} <-
+             resolved_context.transport.execute(resolved_context, payload, transport_opts(opts)) do
+        normalize_response(raw_response)
+      else
+        {:error, %Error{} = error} -> {:error, error}
         {:error, reason} -> {:error, transport_error(reason)}
       end
     end)
@@ -102,6 +102,64 @@ defmodule Prismatic.Client do
   defp maybe_put_operation_name(payload, nil), do: payload
 
   defp transport_opts(opts), do: Keyword.drop(opts, [:operation_name])
+
+  defp resolve_context_auth(%Context{} = context) do
+    with {:ok, headers} <- resolve_headers(context) do
+      {:ok, %{context | headers: headers}}
+    end
+  end
+
+  defp resolve_headers(%Context{} = context) do
+    headers = Headers.merge_auth(context.headers, context.auth)
+
+    case resolve_oauth2_headers(context.oauth2) do
+      {:ok, []} ->
+        {:ok, headers}
+
+      {:ok, oauth2_headers} ->
+        {:ok,
+         Enum.reduce(oauth2_headers, headers, &Headers.put_header(&2, elem(&1, 0), elem(&1, 1)))}
+
+      {:error, reason} ->
+        {:error, auth_error(reason)}
+    end
+  end
+
+  defp resolve_oauth2_headers(nil), do: {:ok, []}
+
+  defp resolve_oauth2_headers(oauth2) when is_list(oauth2) do
+    with {:ok, {source_module, source_opts}} <- fetch_oauth2_source(oauth2),
+         {:ok, %Prismatic.OAuth2.Token{} = token} <-
+           normalize_token_fetch_result(source_module.fetch(source_opts)),
+         {:ok, access_token} <- fetch_access_token(token) do
+      {:ok, [{"authorization", "Bearer #{access_token}"}]}
+    end
+  end
+
+  defp fetch_oauth2_source(opts) do
+    case Keyword.get(opts, :token_source) do
+      {module, source_opts} when is_atom(module) and is_list(source_opts) ->
+        {:ok, {module, source_opts}}
+
+      module when is_atom(module) ->
+        {:ok, {module, []}}
+
+      _other ->
+        {:error, :missing_oauth2_token_source}
+    end
+  end
+
+  defp normalize_token_fetch_result({:ok, %Prismatic.OAuth2.Token{} = token}), do: {:ok, token}
+  defp normalize_token_fetch_result(:error), do: {:error, :missing_oauth2_token}
+  defp normalize_token_fetch_result({:error, _reason} = error), do: error
+  defp normalize_token_fetch_result(_other), do: {:error, :invalid_oauth2_token_source_response}
+
+  defp fetch_access_token(%Prismatic.OAuth2.Token{access_token: access_token})
+       when is_binary(access_token) and access_token != "" do
+    {:ok, access_token}
+  end
+
+  defp fetch_access_token(_token), do: {:error, :missing_oauth2_access_token}
 
   defp normalize_response(%{status: status, headers: headers, body: body}) do
     request_id = header_value(headers, "x-request-id")
@@ -157,6 +215,17 @@ defmodule Prismatic.Client do
 
   defp graphql_message([%{"message" => message} | _rest]) when is_binary(message), do: message
   defp graphql_message(_errors), do: "GraphQL request failed"
+
+  defp auth_error(reason) do
+    %Error{
+      type: :auth,
+      message: "GraphQL request failed during auth setup",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: reason}
+    }
+  end
 
   defp transport_error(reason) do
     %Error{

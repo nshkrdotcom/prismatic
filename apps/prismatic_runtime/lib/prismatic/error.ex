@@ -6,7 +6,7 @@ defmodule Prismatic.Error do
   defexception [:type, :message, :status, :graphql_errors, :request_id, :details]
 
   @type t :: %__MODULE__{
-          type: :transport | :http | :graphql,
+          type: :auth | :transport | :http | :graphql,
           message: String.t(),
           status: pos_integer() | nil,
           graphql_errors: list() | nil,

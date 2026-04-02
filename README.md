@@ -30,6 +30,7 @@ The root workspace exists to coordinate those packages with `blitz`.
 GraphQL provider SDKs tend to accumulate the same infrastructure:
 
 - HTTP execution and auth handling
+- generic OAuth2 and token-source support
 - response and error normalization
 - pagination and connection traversal
 - schema-driven code generation

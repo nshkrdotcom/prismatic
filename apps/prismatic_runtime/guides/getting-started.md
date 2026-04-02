@@ -23,3 +23,18 @@ operation =
 
 {:ok, response} = Prismatic.Client.execute_operation(client, operation)
 ```
+
+For providers that use OAuth2, you can let the runtime resolve the bearer token
+from a token source:
+
+```elixir
+client =
+  Prismatic.Client.new!(
+    base_url: "https://api.example.com/graphql",
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: "/tmp/provider-oauth.json"}
+    ]
+  )
+```

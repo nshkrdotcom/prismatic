@@ -19,7 +19,7 @@ only need to provide auth.
 
 ## Auth Options
 
-The runtime supports two generic auth modes today.
+The runtime supports three generic auth modes today.
 
 Bearer token:
 
@@ -45,6 +45,25 @@ This is generic runtime behavior and belongs in `prismatic`.
 
 Environment-variable names, token discovery policy, and provider-specific auth
 defaults belong in the provider SDK.
+
+OAuth token source:
+
+```elixir
+client =
+  Prismatic.Client.new!(
+    base_url: "https://api.example.com/graphql",
+    oauth2: [
+      token_source:
+        {Prismatic.Adapters.TokenSource.File,
+         path: "/tmp/provider-oauth.json"}
+    ]
+  )
+```
+
+This is the generic path for provider SDKs that want runtime-managed bearer
+resolution from a persisted or refreshable OAuth token source.
+
+Do not pass both `auth:` and `oauth2:` to the same runtime client.
 
 ## Transport Overrides
 

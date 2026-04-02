@@ -68,6 +68,7 @@ defmodule Prismatic.Runtime.MixProject do
         "LICENSE",
         "guides/getting-started.md",
         "guides/client-configuration.md",
+        "guides/oauth-and-token-sources.md",
         "guides/runtime-contract.md",
         "guides/error-handling-and-telemetry.md",
         "guides/developer/provider-sdk-architecture.md",
@@ -81,6 +82,7 @@ defmodule Prismatic.Runtime.MixProject do
         "User Guides": [
           "guides/getting-started.md",
           "guides/client-configuration.md",
+          "guides/oauth-and-token-sources.md",
           "guides/runtime-contract.md",
           "guides/error-handling-and-telemetry.md"
         ],
