@@ -77,3 +77,7 @@ mix monorepo.docs
 - [apps/prismatic_runtime/README.md](/home/home/p/g/n/prismatic/apps/prismatic_runtime/README.md)
 - [apps/prismatic_codegen/README.md](/home/home/p/g/n/prismatic/apps/prismatic_codegen/README.md)
 - [apps/prismatic_provider_testkit/README.md](/home/home/p/g/n/prismatic/apps/prismatic_provider_testkit/README.md)
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
