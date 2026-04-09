@@ -1,5 +1,11 @@
+unless Code.ensure_loaded?(Prismatic.Build.DependencyResolver) do
+  Code.require_file("../../build_support/dependency_resolver.exs", __DIR__)
+end
+
 defmodule Prismatic.Runtime.MixProject do
   use Mix.Project
+
+  alias Prismatic.Build.DependencyResolver
 
   @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
@@ -36,7 +42,7 @@ defmodule Prismatic.Runtime.MixProject do
 
   defp deps do
     [
-      {:req, "~> 0.5.15"},
+      pristine_runtime_dep(),
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
       {:nimble_options, "~> 1.1"},
@@ -47,6 +53,10 @@ defmodule Prismatic.Runtime.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false}
     ]
+  end
+
+  defp pristine_runtime_dep do
+    DependencyResolver.pristine_runtime()
   end
 
   defp description do

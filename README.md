@@ -17,6 +17,11 @@ It takes the same broad philosophy as `pristine`, but shifts the center of
 gravity from REST request specs to GraphQL documents, operations, connections,
 and schema-derived artifacts.
 
+The shared GraphQL runtime now rides the same final-form HTTP lane as the REST
+family: `prismatic` keeps GraphQL semantics, while lower unary HTTP execution
+flows through the `pristine` family kit and its Execution Plane-backed
+transport substrate.
+
 The repo is a non-umbrella monorepo with three packages:
 
 - `prismatic`: shared runtime for GraphQL-over-HTTP execution

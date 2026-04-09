@@ -10,7 +10,11 @@ Provider SDKs built on `prismatic` should keep a strict package split.
 - request payload construction
 - auth/header composition
 - response normalization
-- transport, HTTP, and GraphQL error shaping
+- HTTP and GraphQL error shaping
+
+`prismatic` does not own a repo-local unary HTTP transport. The default
+runtime lane delegates lower HTTP execution through the shared `pristine`
+family kit so provider repos inherit the same substrate without re-owning it.
 
 `prismatic_codegen` owns:
 

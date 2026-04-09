@@ -423,7 +423,7 @@ defmodule Prismatic.OAuth2 do
   defp body_content_type(_method, content_type), do: content_type
 
   defp http_client(opts) do
-    Keyword.get(opts, :http_client, Prismatic.Adapters.OAuthHTTPClient.Req)
+    Keyword.get(opts, :http_client, Prismatic.Adapters.OAuthHTTPClient.Pristine)
   end
 
   defp grant_type_param(:authorization_code), do: "authorization_code"

@@ -34,7 +34,7 @@ defmodule Prismatic.Context do
     headers: [type: {:list, {:tuple, [:string, :string]}}, default: []],
     auth: [type: :any, default: nil],
     oauth2: [type: :any, default: nil],
-    transport: [type: :atom, default: Prismatic.Transport.Req],
+    transport: [type: :atom, default: Prismatic.Transport.Pristine],
     req_options: [type: :keyword_list, default: []],
     telemetry_prefix: [type: {:list, :atom}, default: [:prismatic, :execute]]
   ]

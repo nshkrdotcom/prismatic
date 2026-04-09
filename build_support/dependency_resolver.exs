@@ -4,6 +4,13 @@ defmodule Prismatic.Build.DependencyResolver do
   @workspace_root Path.expand("..", __DIR__)
   @repo "nshkrdotcom/prismatic"
 
+  def pristine_runtime(opts \\ []) do
+    case workspace_path(["../pristine/apps/pristine_runtime"]) do
+      nil -> {:pristine, "~> 0.2.1", opts}
+      path -> {:pristine, Keyword.merge([path: path], opts)}
+    end
+  end
+
   def prismatic_runtime(opts \\ []) do
     case workspace_path(["apps/prismatic_runtime"]) do
       nil -> {:prismatic, "~> 0.2.0", opts}

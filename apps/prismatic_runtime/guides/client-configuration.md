@@ -67,8 +67,12 @@ Do not pass both `auth:` and `oauth2:` to the same runtime client.
 
 ## Transport Overrides
 
-The `transport` option lets provider SDKs or tests replace the default runtime
-transport.
+The default runtime transport is a `pristine`-backed adapter, which keeps
+GraphQL semantics in `prismatic` while delegating lower unary HTTP execution
+through the shared HTTP family lane.
+
+The `transport` option still lets provider SDKs or tests replace that default
+runtime transport.
 
 ```elixir
 client =

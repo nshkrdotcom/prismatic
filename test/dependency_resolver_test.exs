@@ -20,6 +20,9 @@ defmodule Prismatic.DependencyResolverTest do
   test "deps.get inside the workspace keeps sibling paths available" do
     System.argv(["deps.get"])
 
+    assert {:pristine, opts} = DependencyResolver.pristine_runtime()
+    assert opts[:path] == Path.expand("../pristine/apps/pristine_runtime", @project_root)
+
     assert {:prismatic, opts} = DependencyResolver.prismatic_runtime()
     assert opts[:path] == Path.join(@project_root, "apps/prismatic_runtime")
 
@@ -33,6 +36,7 @@ defmodule Prismatic.DependencyResolverTest do
   test "publishing commands skip workspace paths" do
     System.argv(["hex.build"])
 
+    assert {:pristine, "~> 0.2.1", []} = DependencyResolver.pristine_runtime()
     assert {:prismatic, "~> 0.2.0", []} = DependencyResolver.prismatic_runtime()
 
     assert {:prismatic_codegen, opts} = DependencyResolver.prismatic_codegen()
@@ -65,6 +69,36 @@ defmodule Prismatic.DependencyResolverTest do
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
     assert {:prismatic, "~> 0.2.0"} = find_dependency!(probe_module.project()[:deps], :prismatic)
+
+    on_exit(fn ->
+      :code.purge(probe_module)
+      :code.delete(probe_module)
+    end)
+  end
+
+  test "prismatic_runtime uses Hex pristine deps for publishing commands", %{tmp_dir: tmp_dir} do
+    probe_module =
+      Module.concat([
+        Prismatic,
+        TestSupport,
+        "RuntimeMixProbe#{System.unique_integer([:positive])}"
+      ])
+
+    mix_path = Path.join([tmp_dir, "standalone", "prismatic_runtime", "mix.exs"])
+
+    write_transformed_mix_exs!(
+      Path.join(@project_root, "apps/prismatic_runtime/mix.exs"),
+      mix_path,
+      probe_module,
+      "defmodule Prismatic.Runtime.MixProject do"
+    )
+
+    System.argv(["hex.build"])
+
+    assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
+
+    assert {:pristine, "~> 0.2.1", []} =
+             find_dependency!(probe_module.project()[:deps], :pristine)
 
     on_exit(fn ->
       :code.purge(probe_module)

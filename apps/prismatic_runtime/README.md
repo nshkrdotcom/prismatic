@@ -16,6 +16,10 @@ It exists for thin, configuration-driven provider SDKs that need a stable,
 minimal GraphQL-over-HTTP foundation without dragging provider-specific logic
 into the runtime layer.
 
+The package stays GraphQL-native while converging on the shared lower HTTP
+lane. Unary HTTP execution now runs through the `pristine` family kit and its
+Execution Plane-backed transport substrate instead of a repo-local HTTP owner.
+
 ## What this package owns
 
 - GraphQL-over-HTTP execution
@@ -23,11 +27,12 @@ into the runtime layer.
 - OAuth2 helpers and token-source resolution
 - request payload normalization
 - response normalization
-- transport, HTTP, and GraphQL error shaping
+- HTTP and GraphQL error shaping
 - lightweight execution telemetry
 
 ## What this package does not own
 
+- repo-local unary HTTP transport mechanics
 - provider-specific operation catalogs
 - schema-derived code generation
 - provider artifact verification
