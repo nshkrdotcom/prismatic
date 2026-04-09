@@ -23,7 +23,8 @@ defmodule Prismatic.Workspace.MixProject do
       dialyzer: dialyzer(),
       name: "Prismatic Workspace",
       source_url: @source_url,
-      homepage_url: @source_url
+      homepage_url: @source_url,
+      package: package()
     ]
   end
 
@@ -80,6 +81,18 @@ defmodule Prismatic.Workspace.MixProject do
     """
     Tooling workspace for the Prismatic GraphQL-native SDK monorepo.
     """
+  end
+
+  defp package do
+    [
+      name: "prismatic_workspace",
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => @source_url
+      },
+      files:
+        ~w(apps assets build_support .formatter.exs mix.exs README.md CHANGELOG.md LICENSE TASKS.md guides examples)
+    ]
   end
 
   defp docs do
