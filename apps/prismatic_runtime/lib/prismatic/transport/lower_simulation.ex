@@ -10,6 +10,7 @@ defmodule Prismatic.Transport.LowerSimulation do
 
   @behaviour Prismatic.Transport
 
+  alias Prismatic.{AdapterSelectionPolicy, LowerSimulationScenario}
   alias Pristine.Adapters.Transport.LowerSimulation, as: PristineLowerSimulation
   alias Pristine.Core.{Context, Request, Response}
 
@@ -18,11 +19,69 @@ defmodule Prismatic.Transport.LowerSimulation do
   @default_side_effect_policy "deny_external_egress"
   @missing {__MODULE__, :missing}
 
+  @doc """
+  Declares the Phase 6 adapter selection policy for Prismatic GraphQL simulation.
+  """
+  @spec adapter_selection_policy() :: AdapterSelectionPolicy.t()
+  def adapter_selection_policy do
+    AdapterSelectionPolicy.new!(%{
+      selection_surface: "application_config",
+      owner_repo: "prismatic",
+      config_key: "prismatic.graphql_simulation_profiles",
+      default_value_when_unset: "normal_graphql_transport",
+      fail_closed_action_when_misconfigured: "reject_required_or_invalid_profile"
+    })
+  end
+
+  @doc """
+  Builds the owner-local Phase 6 lower scenario declaration for a GraphQL profile.
+  """
+  @spec lower_simulation_scenario!(String.t(), map() | keyword()) ::
+          LowerSimulationScenario.t()
+  def lower_simulation_scenario!(scenario_ref, overrides \\ []) when is_binary(scenario_ref) do
+    overrides = normalize_overrides!(overrides)
+
+    %{
+      scenario_id: scenario_ref,
+      version: "1.0.0",
+      owner_repo: "prismatic",
+      route_kind: "graphql_operation",
+      protocol_surface: "graphql",
+      matcher_class: "deterministic_over_input",
+      status_or_exit_or_response_or_stream_or_chunk_or_fault_shape: %{
+        "status_code" => "configured",
+        "headers" => "configured",
+        "data" => "configured",
+        "errors" => "configured",
+        "extensions" => "configured"
+      },
+      no_egress_assertion: %{
+        "external_egress" => "deny",
+        "process_spawn" => "deny",
+        "side_effect_result" => "not_attempted"
+      },
+      bounded_evidence_projection: %{
+        "contract_version" => "ExecutionPlane.LowerSimulationEvidence.v1",
+        "raw_payload_persistence" => "shape_only",
+        "fingerprints" => ["operation", "variables_shape", "response_shape"]
+      },
+      input_fingerprint_ref: "fingerprint://prismatic/graphql/lower-simulation/input",
+      cleanup_behavior: %{
+        "runtime_artifacts" => "delete",
+        "durable_payload" => "deny_raw"
+      }
+    }
+    |> Map.merge(overrides)
+    |> LowerSimulationScenario.new!()
+  end
+
   @impl true
   def execute(%Prismatic.Context{} = context, payload, opts) when is_map(payload) do
     request_opts = Keyword.merge(context.req_options, opts)
 
-    with {:ok, endpoint_id, pristine_config} <- pristine_profile_config(context, payload),
+    with :ok <- reject_public_simulation_selector(context.req_options),
+         :ok <- reject_public_simulation_selector(opts),
+         {:ok, endpoint_id, pristine_config} <- pristine_profile_config(context, payload),
          {:ok, %Response{} = response} <-
            payload
            |> build_request(context, endpoint_id, request_opts)
@@ -42,7 +101,8 @@ defmodule Prismatic.Transport.LowerSimulation do
     config = merged_config(context)
     keys = profile_keys(payload)
 
-    with {:ok, _required?} <- required?(config),
+    with :ok <- reject_public_simulation_selector(config),
+         {:ok, _required?} <- required?(config),
          {:ok, profile} <- configured_profile(config, keys),
          {:ok, pristine_profile} <- normalize_profile(profile) do
       endpoint_id = List.first(keys)
@@ -77,6 +137,41 @@ defmodule Prismatic.Transport.LowerSimulation do
 
   defp merge_config(_app_config, context_config), do: context_config
 
+  defp normalize_overrides!(overrides) when is_map(overrides), do: overrides
+
+  defp normalize_overrides!(overrides) when is_list(overrides) do
+    if Keyword.keyword?(overrides) do
+      Map.new(overrides)
+    else
+      raise ArgumentError, "expected keyword overrides, got: #{inspect(overrides)}"
+    end
+  end
+
+  defp normalize_overrides!(overrides) do
+    raise ArgumentError, "expected map or keyword overrides, got: #{inspect(overrides)}"
+  end
+
+  defp reject_public_simulation_selector(values) when is_list(values) do
+    if Enum.any?(values, &public_simulation_entry?/1) do
+      {:error, {:public_simulation_selector_forbidden, :prismatic}}
+    else
+      :ok
+    end
+  end
+
+  defp reject_public_simulation_selector(values) when is_map(values) do
+    if Map.has_key?(values, :simulation) or Map.has_key?(values, "simulation") do
+      {:error, {:public_simulation_selector_forbidden, :prismatic}}
+    else
+      :ok
+    end
+  end
+
+  defp reject_public_simulation_selector(_values), do: :ok
+
+  defp public_simulation_entry?({key, _value}), do: key in [:simulation, "simulation"]
+  defp public_simulation_entry?(_entry), do: false
+
   defp required?(config) do
     case config_value(config, :required?, true) do
       value when is_boolean(value) -> {:ok, value}
@@ -104,7 +199,8 @@ defmodule Prismatic.Transport.LowerSimulation do
   end
 
   defp normalize_profile(profile) do
-    with {:ok, scenario_ref} <- required_string(profile, :scenario_ref),
+    with :ok <- reject_public_simulation_selector(profile),
+         {:ok, scenario_ref} <- required_string(profile, :scenario_ref),
          {:ok, body} <- response_body(profile),
          {:ok, status_code} <- status_code(profile),
          {:ok, headers} <- headers(profile),

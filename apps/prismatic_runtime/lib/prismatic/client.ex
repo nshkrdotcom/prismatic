@@ -76,7 +76,8 @@ defmodule Prismatic.Client do
 
   defp execute_payload(%Context{} = context, payload, metadata, opts) do
     Telemetry.span(context.telemetry_prefix, metadata, fn ->
-      with {:ok, resolved_context} <- resolve_context_auth(context),
+      with :ok <- reject_public_simulation_selector(opts),
+           {:ok, resolved_context} <- resolve_context_auth(context),
            {:ok, raw_response} <-
              resolved_context.transport.execute(resolved_context, payload, transport_opts(opts)) do
         normalize_response(raw_response)
@@ -102,6 +103,30 @@ defmodule Prismatic.Client do
   defp maybe_put_operation_name(payload, nil), do: payload
 
   defp transport_opts(opts), do: Keyword.drop(opts, [:operation_name])
+
+  defp reject_public_simulation_selector(values) when is_list(values) do
+    if Enum.any?(values, &public_simulation_entry?/1) do
+      {:error, public_simulation_selector_error()}
+    else
+      :ok
+    end
+  end
+
+  defp reject_public_simulation_selector(_values), do: :ok
+
+  defp public_simulation_entry?({key, _value}), do: key in [:simulation, "simulation"]
+  defp public_simulation_entry?(_entry), do: false
+
+  defp public_simulation_selector_error do
+    %Error{
+      type: :transport,
+      message: "GraphQL request used a forbidden public simulation selector",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: {:public_simulation_selector_forbidden, :prismatic}}
+    }
+  end
 
   defp resolve_context_auth(%Context{} = context) do
     with {:ok, headers} <- resolve_headers(context) do
