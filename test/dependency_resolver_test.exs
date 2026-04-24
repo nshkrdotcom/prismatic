@@ -23,8 +23,10 @@ defmodule Prismatic.DependencyResolverTest do
     assert {:pristine, opts} = DependencyResolver.pristine_runtime()
     assert opts[:path] == Path.expand("../pristine/apps/pristine_runtime", @project_root)
 
-    assert {:execution_plane, opts} = DependencyResolver.execution_plane()
-    assert opts[:path] == Path.expand("../execution_plane", @project_root)
+    assert {:execution_plane_contracts, opts} = DependencyResolver.execution_plane_contracts()
+
+    assert opts[:path] ==
+             Path.expand("../execution_plane/core/execution_plane_contracts", @project_root)
 
     assert {:prismatic, opts} = DependencyResolver.prismatic_runtime()
     assert opts[:path] == Path.join(@project_root, "apps/prismatic_runtime")
@@ -40,7 +42,10 @@ defmodule Prismatic.DependencyResolverTest do
     System.argv(["hex.build"])
 
     assert {:pristine, "~> 0.2.1", []} = DependencyResolver.pristine_runtime()
-    assert {:execution_plane, "~> 0.1.0", []} = DependencyResolver.execution_plane()
+
+    assert {:execution_plane_contracts, "~> 0.1.0", []} =
+             DependencyResolver.execution_plane_contracts()
+
     assert {:prismatic, "~> 0.2.0", []} = DependencyResolver.prismatic_runtime()
 
     assert {:prismatic_codegen, opts} = DependencyResolver.prismatic_codegen()
@@ -106,8 +111,8 @@ defmodule Prismatic.DependencyResolverTest do
     assert {:pristine, "~> 0.2.1", []} =
              find_dependency!(probe_module.project()[:deps], :pristine)
 
-    assert {:execution_plane, "~> 0.1.0", []} =
-             find_dependency!(probe_module.project()[:deps], :execution_plane)
+    assert {:execution_plane_contracts, "~> 0.1.0", []} =
+             find_dependency!(probe_module.project()[:deps], :execution_plane_contracts)
 
     on_exit(fn ->
       :code.purge(probe_module)

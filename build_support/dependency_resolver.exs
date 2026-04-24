@@ -3,7 +3,7 @@ defmodule Prismatic.Build.DependencyResolver do
 
   @workspace_root Path.expand("..", __DIR__)
   @repo "nshkrdotcom/prismatic"
-  @execution_plane_version "~> 0.1.0"
+  @execution_plane_contracts_version "~> 0.1.0"
 
   def pristine_runtime(opts \\ []) do
     case workspace_path(["../pristine/apps/pristine_runtime"]) do
@@ -19,10 +19,10 @@ defmodule Prismatic.Build.DependencyResolver do
     end
   end
 
-  def execution_plane(opts \\ []) do
-    case workspace_path(["../execution_plane"]) do
-      nil -> {:execution_plane, @execution_plane_version, opts}
-      path -> {:execution_plane, Keyword.merge([path: path], opts)}
+  def execution_plane_contracts(opts \\ []) do
+    case workspace_path(["../execution_plane/core/execution_plane_contracts"]) do
+      nil -> {:execution_plane_contracts, @execution_plane_contracts_version, opts}
+      path -> {:execution_plane_contracts, Keyword.merge([path: path], opts)}
     end
   end
 
@@ -52,12 +52,12 @@ defmodule Prismatic.Build.DependencyResolver do
   end
 
   defp workspace_path(local_paths) do
-    if prefer_workspace_paths?() do
+    if local_workspace_deps?() do
       Enum.find_value(local_paths, &existing_path/1)
     end
   end
 
-  defp prefer_workspace_paths? do
+  defp local_workspace_deps? do
     not publishing_package?() and not Enum.member?(Path.split(@workspace_root), "deps")
   end
 

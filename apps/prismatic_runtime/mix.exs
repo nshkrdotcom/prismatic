@@ -42,7 +42,7 @@ defmodule Prismatic.Runtime.MixProject do
 
   defp deps do
     [
-      execution_plane_dep(),
+      execution_plane_contracts_dep(),
       pristine_runtime_dep(),
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
@@ -56,8 +56,8 @@ defmodule Prismatic.Runtime.MixProject do
     ]
   end
 
-  defp execution_plane_dep do
-    DependencyResolver.execution_plane()
+  defp execution_plane_contracts_dep do
+    DependencyResolver.execution_plane_contracts()
   end
 
   defp pristine_runtime_dep do
