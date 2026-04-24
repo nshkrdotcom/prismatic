@@ -23,6 +23,9 @@ defmodule Prismatic.DependencyResolverTest do
     assert {:pristine, opts} = DependencyResolver.pristine_runtime()
     assert opts[:path] == Path.expand("../pristine/apps/pristine_runtime", @project_root)
 
+    assert {:execution_plane, opts} = DependencyResolver.execution_plane()
+    assert opts[:path] == Path.expand("../execution_plane", @project_root)
+
     assert {:prismatic, opts} = DependencyResolver.prismatic_runtime()
     assert opts[:path] == Path.join(@project_root, "apps/prismatic_runtime")
 
@@ -37,14 +40,17 @@ defmodule Prismatic.DependencyResolverTest do
     System.argv(["hex.build"])
 
     assert {:pristine, "~> 0.2.1", []} = DependencyResolver.pristine_runtime()
+    assert {:execution_plane, "~> 0.1.0", []} = DependencyResolver.execution_plane()
     assert {:prismatic, "~> 0.2.0", []} = DependencyResolver.prismatic_runtime()
 
     assert {:prismatic_codegen, opts} = DependencyResolver.prismatic_codegen()
     assert opts[:github] == "nshkrdotcom/prismatic"
+    assert opts[:branch] == "main"
     refute Keyword.has_key?(opts, :path)
 
     assert {:prismatic_provider_testkit, opts} = DependencyResolver.prismatic_provider_testkit()
     assert opts[:github] == "nshkrdotcom/prismatic"
+    assert opts[:branch] == "main"
     refute Keyword.has_key?(opts, :path)
   end
 
@@ -99,6 +105,9 @@ defmodule Prismatic.DependencyResolverTest do
 
     assert {:pristine, "~> 0.2.1", []} =
              find_dependency!(probe_module.project()[:deps], :pristine)
+
+    assert {:execution_plane, "~> 0.1.0", []} =
+             find_dependency!(probe_module.project()[:deps], :execution_plane)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -176,6 +185,7 @@ defmodule Prismatic.DependencyResolverTest do
              find_dependency!(probe_module.project()[:deps], :prismatic_codegen)
 
     assert opts[:github] == "nshkrdotcom/prismatic"
+    assert opts[:branch] == "main"
     assert opts[:subdir] == "apps/prismatic_codegen"
 
     on_exit(fn ->

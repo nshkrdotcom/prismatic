@@ -8,3 +8,13 @@
 *.beam
 /.DS_Store
 /tmp/
+
+# Nested workspace package artifacts
+apps/**/_build/
+apps/**/deps/
+apps/**/doc/
+apps/**/cover/
+apps/**/priv/plts/
+apps/**/*.beam
+apps/**/*.plt
+apps/**/*.plt.hash

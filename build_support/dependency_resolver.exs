@@ -3,6 +3,7 @@ defmodule Prismatic.Build.DependencyResolver do
 
   @workspace_root Path.expand("..", __DIR__)
   @repo "nshkrdotcom/prismatic"
+  @execution_plane_version "~> 0.1.0"
 
   def pristine_runtime(opts \\ []) do
     case workspace_path(["../pristine/apps/pristine_runtime"]) do
@@ -18,11 +19,18 @@ defmodule Prismatic.Build.DependencyResolver do
     end
   end
 
+  def execution_plane(opts \\ []) do
+    case workspace_path(["../execution_plane"]) do
+      nil -> {:execution_plane, @execution_plane_version, opts}
+      path -> {:execution_plane, Keyword.merge([path: path], opts)}
+    end
+  end
+
   def prismatic_codegen(opts \\ []) do
     resolve(
       :prismatic_codegen,
       ["apps/prismatic_codegen"],
-      [github: @repo, branch: "master", subdir: "apps/prismatic_codegen"],
+      [github: @repo, branch: "main", subdir: "apps/prismatic_codegen"],
       opts
     )
   end
@@ -31,7 +39,7 @@ defmodule Prismatic.Build.DependencyResolver do
     resolve(
       :prismatic_provider_testkit,
       ["apps/prismatic_provider_testkit"],
-      [github: @repo, branch: "master", subdir: "apps/prismatic_provider_testkit"],
+      [github: @repo, branch: "main", subdir: "apps/prismatic_provider_testkit"],
       opts
     )
   end

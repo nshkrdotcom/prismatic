@@ -42,6 +42,7 @@ defmodule Prismatic.Runtime.MixProject do
 
   defp deps do
     [
+      execution_plane_dep(),
       pristine_runtime_dep(),
       {:jason, "~> 1.4"},
       {:telemetry, "~> 1.3"},
@@ -53,6 +54,10 @@ defmodule Prismatic.Runtime.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.40", only: :dev, runtime: false}
     ]
+  end
+
+  defp execution_plane_dep do
+    DependencyResolver.execution_plane()
   end
 
   defp pristine_runtime_dep do
