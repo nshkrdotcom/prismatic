@@ -8,7 +8,12 @@
 
 ## Execution Plane Stack
 - `prismatic` is the semantic GraphQL family kit. It may carry mapped execution-plane contracts but must not expose raw lower HTTP transport as its product API.
-- Keep runtime dependencies publish-aware through `build_support/dependency_resolver.exs`.
+- Keep runtime dependencies publish-aware through
+  `build_support/dependency_resolver.exs`.
+- In local sibling mode, `DependencyResolver.execution_plane/1` resolves
+  `:execution_plane` to `../execution_plane/core/execution_plane`. Do not
+  point `:execution_plane` at the sibling repo root; that root is the
+  non-published Blitz workspace project.
 - `linear_sdk` is the active proof SDK for this layer.
 
 ## Gates
