@@ -3,7 +3,7 @@ defmodule Prismatic.Build.DependencyResolver do
 
   @workspace_root Path.expand("..", __DIR__)
   @repo "nshkrdotcom/prismatic"
-  @execution_plane_contracts_version "~> 0.1.0"
+  @execution_plane_version "~> 0.1.0"
 
   def pristine_runtime(opts \\ []) do
     case workspace_path(["../pristine/apps/pristine_runtime"]) do
@@ -19,10 +19,10 @@ defmodule Prismatic.Build.DependencyResolver do
     end
   end
 
-  def execution_plane_contracts(opts \\ []) do
-    case workspace_path(["../execution_plane/core/execution_plane_contracts"]) do
-      nil -> {:execution_plane_contracts, @execution_plane_contracts_version, opts}
-      path -> {:execution_plane_contracts, Keyword.merge([path: path], opts)}
+  def execution_plane(opts \\ []) do
+    case workspace_path(["../execution_plane"]) do
+      nil -> {:execution_plane, @execution_plane_version, opts}
+      path -> {:execution_plane, Keyword.merge([path: path], opts)}
     end
   end
 
