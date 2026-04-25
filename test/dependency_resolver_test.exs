@@ -25,7 +25,7 @@ defmodule Prismatic.DependencyResolverTest do
 
     assert {:execution_plane, opts} = DependencyResolver.execution_plane()
 
-    assert opts[:path] == Path.expand("../execution_plane", @project_root)
+    assert opts[:path] == Path.expand("../execution_plane/core/execution_plane", @project_root)
 
     assert {:prismatic, opts} = DependencyResolver.prismatic_runtime()
     assert opts[:path] == Path.join(@project_root, "apps/prismatic_runtime")

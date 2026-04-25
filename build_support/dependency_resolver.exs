@@ -20,7 +20,7 @@ defmodule Prismatic.Build.DependencyResolver do
   end
 
   def execution_plane(opts \\ []) do
-    case workspace_path(["../execution_plane"]) do
+    case workspace_path(["../execution_plane/core/execution_plane"]) do
       nil -> {:execution_plane, @execution_plane_version, opts}
       path -> {:execution_plane, Keyword.merge([path: path], opts)}
     end
