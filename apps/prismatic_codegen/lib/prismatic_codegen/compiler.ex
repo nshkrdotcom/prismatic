@@ -126,7 +126,7 @@ defmodule PrismaticCodegen.Compiler do
 
                   %ProviderIR.Model.Field{
                     name: field.name,
-                    key: field.name |> Macro.underscore() |> String.to_atom(),
+                    key: field_key!(field.name),
                     kind: named.kind,
                     type_name: named.name
                   }
@@ -156,6 +156,36 @@ defmodule PrismaticCodegen.Compiler do
       }
     end)
   end
+
+  defp field_key!(field_name) do
+    field_name
+    |> Macro.underscore()
+    |> validate_field_key!(field_name)
+  end
+
+  defp validate_field_key!(key, field_name) do
+    if valid_field_key?(key) do
+      key
+    else
+      raise ArgumentError,
+            "invalid generated field key #{inspect(key)} from #{inspect(field_name)}"
+    end
+  end
+
+  defp valid_field_key?(<<first, rest::binary>>) when first in ?a..?z or first == ?_ do
+    valid_field_key_rest?(rest)
+  end
+
+  defp valid_field_key?(_key), do: false
+
+  defp valid_field_key_rest?(<<>>), do: true
+
+  defp valid_field_key_rest?(<<char, rest::binary>>)
+       when char in ?a..?z or char in ?0..?9 or char == ?_ do
+    valid_field_key_rest?(rest)
+  end
+
+  defp valid_field_key_rest?(_rest), do: false
 
   defp build_schema(%Introspection.Snapshot{} = snapshot) do
     %ProviderIR.Schema{

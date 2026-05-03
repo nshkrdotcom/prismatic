@@ -40,11 +40,10 @@ defmodule Prismatic.GraphQL.DocumentTest do
     mutation UpdateViewer { viewerUpdate(input: {name: "Ada"}) { success } }
     """
 
-    assert_raise ArgumentError,
-                 ~r/document declares multiple operations; pass operation_name: "\.\.\." to select one/,
-                 fn ->
-                   Document.select_operation!(document)
-                 end
+    error = assert_raise ArgumentError, fn -> Document.select_operation!(document) end
+
+    assert error.message ==
+             "document declares multiple operations; pass operation_name: \"...\" to select one"
   end
 
   test "selects the requested operation from a multi-operation document" do

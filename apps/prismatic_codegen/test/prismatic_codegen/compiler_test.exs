@@ -180,9 +180,8 @@ defmodule PrismaticCodegen.CompilerTest do
     assert ["lib/example_sdk/generated/operations/viewer.ex" | _rest] =
              Verify.stale_files(provider)
 
-    assert_raise ArgumentError, ~r/stale generated artifacts/, fn ->
-      Verify.assert_current!(provider)
-    end
+    error = assert_raise ArgumentError, fn -> Verify.assert_current!(provider) end
+    assert error.message =~ "stale generated artifacts"
   end
 
   test "verify reports unexpected generated files and generate prunes them" do

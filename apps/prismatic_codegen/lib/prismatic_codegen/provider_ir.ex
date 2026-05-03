@@ -105,7 +105,7 @@ defmodule PrismaticCodegen.ProviderIR do
 
       @type t :: %__MODULE__{
               name: String.t(),
-              key: atom(),
+              key: String.t(),
               kind: String.t(),
               type_name: String.t()
             }

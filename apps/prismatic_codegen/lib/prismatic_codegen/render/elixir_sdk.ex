@@ -118,12 +118,14 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
   end
 
   defp render_model_module(%ProviderIR.Model{} = model) do
-    keys = Enum.map_join(model.fields, ", ", &":#{&1.key}")
+    keys = Enum.map_join(model.fields, ", ", &atom_literal(&1.key))
 
     assignments =
       model.fields
       |> Enum.map_join(",\n", fn field ->
-        "      #{field.key}: field_value(attributes, #{inspect(field.name)}, :#{field.key})"
+        atom_key = atom_literal(field.key)
+
+        "      #{atom_key} => field_value(attributes, #{inspect(field.name)}, #{atom_key})"
       end)
 
     """
@@ -153,6 +155,8 @@ defmodule PrismaticCodegen.Render.ElixirSDK do
     """
     |> String.trim()
   end
+
+  defp atom_literal(key), do: ":#{inspect(key)}"
 
   defp render_enum_module(%ProviderIR.Enum{} = enum) do
     values = Enum.map_join(enum.values, ", ", &inspect/1)

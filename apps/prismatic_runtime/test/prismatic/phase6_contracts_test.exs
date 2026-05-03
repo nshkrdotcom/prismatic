@@ -34,29 +34,29 @@ defmodule Prismatic.Phase6ContractsTest do
   end
 
   test "Prismatic GraphQL lower scenarios reject bad owner, unsupported enums, egress, and raw evidence" do
-    assert_raise ArgumentError, ~r/owner_repo.*prismatic/, fn ->
+    assert_argument_error_contains(["owner_repo", "prismatic"], fn ->
       LowerSimulationScenario.new!(scenario_attrs(%{owner_repo: "pristine"}))
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/protocol_surface.*unsupported/, fn ->
+    assert_argument_error_contains(["protocol_surface", "unsupported"], fn ->
       LowerSimulationScenario.new!(scenario_attrs(%{protocol_surface: "http"}))
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/matcher_class.*unsupported/, fn ->
+    assert_argument_error_contains(["matcher_class", "unsupported"], fn ->
       LowerSimulationScenario.new!(scenario_attrs(%{matcher_class: "semantic_provider"}))
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/semantic provider policy/i, fn ->
+    assert_argument_error_contains(["semantic provider policy"], fn ->
       LowerSimulationScenario.new!(Map.put(scenario_attrs(), :model_refs, ["claude"]))
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/no_egress_assertion.*external_egress.*deny/, fn ->
+    assert_argument_error_contains(["no_egress_assertion", "external_egress", "deny"], fn ->
       LowerSimulationScenario.new!(
         scenario_attrs(%{no_egress_assertion: %{"external_egress" => "allow"}})
       )
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/raw_payload_persistence.*shape_only/, fn ->
+    assert_argument_error_contains(["raw_payload_persistence", "shape_only"], fn ->
       LowerSimulationScenario.new!(
         scenario_attrs(%{
           bounded_evidence_projection: %{
@@ -65,19 +65,22 @@ defmodule Prismatic.Phase6ContractsTest do
           }
         })
       )
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/ExecutionOutcome.v1.raw_payload.*must not be narrowed/, fn ->
-      LowerSimulationScenario.new!(
-        scenario_attrs(%{
-          bounded_evidence_projection: %{
-            "contract_version" => "ExecutionPlane.LowerSimulationEvidence.v1",
-            "target_contract" => "ExecutionOutcome.v1.raw_payload",
-            "raw_payload_persistence" => "shape_only"
-          }
-        })
-      )
-    end
+    assert_argument_error_contains(
+      ["ExecutionOutcome.v1.raw_payload", "must not be narrowed"],
+      fn ->
+        LowerSimulationScenario.new!(
+          scenario_attrs(%{
+            bounded_evidence_projection: %{
+              "contract_version" => "ExecutionPlane.LowerSimulationEvidence.v1",
+              "target_contract" => "ExecutionOutcome.v1.raw_payload",
+              "raw_payload_persistence" => "shape_only"
+            }
+          })
+        )
+      end
+    )
   end
 
   test "lower simulation transport declares app-config adapter selection only" do
@@ -93,13 +96,13 @@ defmodule Prismatic.Phase6ContractsTest do
     assert_json_safe(dump)
     assert AdapterSelectionPolicy.new!(dump) == policy
 
-    assert_raise ArgumentError, ~r/public simulation selector/i, fn ->
+    assert_argument_error_contains(["public simulation selector"], fn ->
       AdapterSelectionPolicy.new!(Map.put(adapter_policy_attrs(), :simulation, "service_mode"))
-    end
+    end)
 
-    assert_raise ArgumentError, ~r/config_key.*public simulation selector/i, fn ->
+    assert_argument_error_contains(["config_key", "public simulation selector"], fn ->
       AdapterSelectionPolicy.new!(adapter_policy_attrs(%{config_key: "request.simulation"}))
-    end
+    end)
   end
 
   test "public simulation request selectors are rejected before transport selection" do
@@ -204,5 +207,14 @@ defmodule Prismatic.Phase6ContractsTest do
   defp assert_json_safe(value) when is_map(value) do
     assert Enum.all?(Map.keys(value), &is_binary/1)
     Enum.each(value, fn {_key, nested} -> assert_json_safe(nested) end)
+  end
+
+  defp assert_argument_error_contains(required_fragments, fun) do
+    error = assert_raise ArgumentError, fun
+    downcased_message = String.downcase(error.message)
+
+    for fragment <- required_fragments do
+      assert String.contains?(downcased_message, String.downcase(fragment))
+    end
   end
 end
