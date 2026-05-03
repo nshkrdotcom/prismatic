@@ -54,6 +54,10 @@ end
 
 ## Create a client
 
+Standalone clients can pass a direct endpoint and direct auth. Provider SDKs
+may still source those values from local env or token files for direct
+developer use.
+
 ```elixir
 client =
   Prismatic.Client.new!(
@@ -73,6 +77,29 @@ client =
         {Prismatic.Adapters.TokenSource.File,
          path: "/tmp/provider-oauth.json"}
     ]
+  )
+```
+
+Governed clients use an authority-selected endpoint and credential handle.
+They do not accept direct `base_url:`, `auth:`, `headers:`, or `oauth2:`
+options, and request-time auth or endpoint overrides fail closed.
+
+```elixir
+authority =
+  Prismatic.GovernedAuthority.new!(
+    base_url: "https://api.example.com/graphql",
+    credential_ref: "credential://provider/graphql",
+    credential_lease_ref: "lease://provider/graphql",
+    target_ref: "target://provider/graphql",
+    operation_policy_ref: "operation-policy://provider/read",
+    redaction_ref: "redaction://provider/default",
+    headers: [{"x-provider-version", "2026-05-03"}],
+    credential_headers: [{"authorization", "Bearer materialized-token"}]
+  )
+
+client =
+  Prismatic.Client.new!(
+    governed_authority: authority
   )
 ```
 

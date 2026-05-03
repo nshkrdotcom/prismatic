@@ -114,10 +114,18 @@ defmodule Prismatic.Transport.LowerSimulation do
   end
 
   defp merged_config(%Prismatic.Context{} = context) do
-    app_config = Application.get_env(@app, @config_key)
+    app_config = app_config(context)
     context_config = Keyword.get(context.req_options, @config_key, [])
 
     merge_config(app_config, context_config)
+  end
+
+  defp app_config(%Prismatic.Context{} = context) do
+    if Prismatic.Context.governed?(context) do
+      nil
+    else
+      Application.get_env(@app, @config_key)
+    end
   end
 
   defp merge_config(nil, context_config), do: context_config

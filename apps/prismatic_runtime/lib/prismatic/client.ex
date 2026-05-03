@@ -5,6 +5,7 @@ defmodule Prismatic.Client do
 
   alias Prismatic.Context
   alias Prismatic.Error
+  alias Prismatic.GovernedAuthority
   alias Prismatic.GraphQL.Document
   alias Prismatic.Headers
   alias Prismatic.Operation
@@ -41,11 +42,7 @@ defmodule Prismatic.Client do
         variables \\ %{},
         opts \\ []
       ) do
-    metadata = %{
-      base_url: context.base_url,
-      operation: operation.name,
-      kind: operation.kind
-    }
+    metadata = metadata(context, operation.name, operation.kind)
 
     execute_payload(
       context,
@@ -60,11 +57,7 @@ defmodule Prismatic.Client do
   def execute_document(client, document, variables \\ %{}, opts \\ []) when is_binary(document) do
     selected_operation = Document.select_operation!(document, Keyword.get(opts, :operation_name))
 
-    metadata = %{
-      base_url: client.context.base_url,
-      operation: selected_operation.name,
-      kind: selected_operation.kind
-    }
+    metadata = metadata(client.context, selected_operation.name, selected_operation.kind)
 
     execute_payload(
       client.context,
@@ -77,6 +70,7 @@ defmodule Prismatic.Client do
   defp execute_payload(%Context{} = context, payload, metadata, opts) do
     Telemetry.span(context.telemetry_prefix, metadata, fn ->
       with :ok <- reject_public_simulation_selector(opts),
+           :ok <- reject_governed_request_options(context, opts),
            {:ok, resolved_context} <- resolve_context_auth(context),
            {:ok, raw_response} <-
              resolved_context.transport.execute(resolved_context, payload, transport_opts(opts)) do
@@ -102,6 +96,26 @@ defmodule Prismatic.Client do
 
   defp maybe_put_operation_name(payload, nil), do: payload
 
+  defp metadata(%Context{} = context, operation_name, operation_kind) do
+    %{
+      base_url: context.base_url,
+      operation: operation_name,
+      kind: operation_kind
+    }
+    |> maybe_put_governed_metadata(context.governed_authority)
+  end
+
+  defp maybe_put_governed_metadata(metadata, %GovernedAuthority{} = authority) do
+    Map.merge(metadata, %{
+      governed?: true,
+      target_ref: authority.target_ref,
+      operation_policy_ref: authority.operation_policy_ref,
+      redaction_ref: authority.redaction_ref
+    })
+  end
+
+  defp maybe_put_governed_metadata(metadata, nil), do: metadata
+
   defp transport_opts(opts), do: Keyword.drop(opts, [:operation_name])
 
   defp reject_public_simulation_selector(values) when is_list(values) do
@@ -117,6 +131,52 @@ defmodule Prismatic.Client do
   defp public_simulation_entry?({key, _value}), do: key in [:simulation, "simulation"]
   defp public_simulation_entry?(_entry), do: false
 
+  defp reject_governed_request_options(%Context{governed_authority: nil}, _opts), do: :ok
+
+  defp reject_governed_request_options(%Context{}, opts) when is_list(opts) do
+    case forbidden_governed_request_option(opts) do
+      nil -> :ok
+      key -> {:error, governed_request_error(key)}
+    end
+  end
+
+  defp reject_governed_request_options(%Context{}, _opts), do: :ok
+
+  defp forbidden_governed_request_option(opts) do
+    Enum.find_value(opts, fn
+      {key, _value} ->
+        if key in forbidden_governed_request_keys(), do: key
+
+      _entry ->
+        nil
+    end)
+  end
+
+  defp forbidden_governed_request_keys do
+    [
+      :headers,
+      "headers",
+      :authorization,
+      "authorization",
+      :auth,
+      "auth",
+      :oauth2,
+      "oauth2",
+      :base_url,
+      "base_url",
+      :url,
+      "url",
+      :endpoint,
+      "endpoint",
+      :endpoint_url,
+      "endpoint_url",
+      :operation_policy,
+      "operation_policy",
+      :operation_policy_ref,
+      "operation_policy_ref"
+    ]
+  end
+
   defp public_simulation_selector_error do
     %Error{
       type: :transport,
@@ -125,6 +185,17 @@ defmodule Prismatic.Client do
       graphql_errors: nil,
       request_id: nil,
       details: %{reason: {:public_simulation_selector_forbidden, :prismatic}}
+    }
+  end
+
+  defp governed_request_error(key) do
+    %Error{
+      type: :auth,
+      message: "Governed GraphQL request used unmanaged request options",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: {:governed_request_option_forbidden, key}}
     }
   end
 

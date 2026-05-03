@@ -7,6 +7,7 @@ The runtime owns:
 
 - GraphQL payload construction and execution planning
 - auth and header composition
+- governed authority materialization
 - response normalization
 - GraphQL error shaping
 - telemetry hooks
@@ -18,3 +19,8 @@ transport substrate.
 
 Provider repos should call the public runtime surface rather than reach into
 internal helper modules.
+
+Standalone provider wrappers may keep direct env, token-file, and OAuth helpers
+for local use. Governed wrappers pass `Prismatic.GovernedAuthority`; direct
+`base_url:`, `headers:`, `auth:`, `oauth2:`, saved token sources, and
+request-time auth or endpoint overrides are rejected at the runtime boundary.

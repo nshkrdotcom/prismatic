@@ -47,6 +47,12 @@ GraphQL provider SDKs tend to accumulate the same infrastructure:
 stay focused on provider configuration, generated artifacts, and a narrow layer
 of handwritten convenience helpers.
 
+The runtime now has an explicit governed authority mode for GraphQL provider
+integrations. Standalone clients can still use direct endpoints, env-backed
+provider config, bearer tokens, custom auth headers, OAuth helpers, and saved
+token files. Governed clients pass `Prismatic.GovernedAuthority` and reject
+unmanaged endpoint, auth, token-source, and request override inputs.
+
 ## Workspace map
 
 - [Workspace Overview](guides/workspace-overview.md): repo layout and package responsibilities

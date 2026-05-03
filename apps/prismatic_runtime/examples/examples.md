@@ -3,6 +3,10 @@
 These examples stay intentionally small because `prismatic` is a runtime
 package, not a provider SDK.
 
+The direct auth snippets below are standalone examples. Governed integrations
+pass `Prismatic.GovernedAuthority` and do not source auth or endpoints from
+env at the runtime boundary.
+
 ## Bearer Auth
 
 ```elixir

@@ -39,6 +39,11 @@ client =
 That token source is resolved at execution time, not just once at client
 construction.
 
+Token sources are standalone compatibility inputs. A governed client does not
+load saved token files, refresh local OAuth tokens, or accept `oauth2:`. The
+authority layer must materialize the credential headers and pass them through
+`Prismatic.GovernedAuthority`.
+
 ## Token File Persistence
 
 The built-in file token source persists the normalized token map as JSON:
@@ -75,6 +80,10 @@ oauth2_source =
 ```
 
 Then pass that wrapped source to `oauth2:`.
+
+Do not pass refreshable sources to governed clients. Governed refresh,
+rotation, and lease policy belong to the authority that creates the
+`Prismatic.GovernedAuthority`.
 
 ## Provider Helper Pattern
 

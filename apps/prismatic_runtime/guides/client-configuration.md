@@ -5,7 +5,7 @@ runtime contract that provider SDKs build on.
 
 ## Required Input
 
-At minimum, the runtime needs a GraphQL endpoint:
+At minimum, a standalone runtime client needs a GraphQL endpoint:
 
 ```elixir
 client =
@@ -14,12 +14,15 @@ client =
   )
 ```
 
-Provider SDKs usually wrap this and supply a default `base_url`, so end users
-only need to provide auth.
+Provider SDKs usually wrap this and supply a default `base_url`, so standalone
+end users only need to provide auth.
 
 ## Auth Options
 
 The runtime supports three generic auth modes today.
+
+These modes are standalone compatibility inputs. They can be backed by local
+env or saved token files in provider SDKs, but they are not governed authority.
 
 Bearer token:
 
@@ -65,6 +68,39 @@ resolution from a persisted or refreshable OAuth token source.
 
 Do not pass both `auth:` and `oauth2:` to the same runtime client.
 
+## Governed Authority
+
+Governed mode is explicit. Pass a `Prismatic.GovernedAuthority` instead of
+direct endpoint or auth options:
+
+```elixir
+authority =
+  Prismatic.GovernedAuthority.new!(
+    base_url: "https://api.example.com/graphql",
+    credential_ref: "credential://provider/graphql",
+    credential_lease_ref: "lease://provider/graphql",
+    target_ref: "target://provider/graphql",
+    operation_policy_ref: "operation-policy://provider/read",
+    redaction_ref: "redaction://provider/default",
+    headers: [{"x-provider-version", "2026-05-03"}],
+    credential_headers: [{"authorization", "Bearer materialized-token"}]
+  )
+
+client =
+  Prismatic.Client.new!(
+    governed_authority: authority
+  )
+```
+
+When `governed_authority:` is present, `Prismatic.Client` rejects direct
+`base_url:`, `headers:`, `auth:`, and `oauth2:` construction inputs. It also
+rejects request-time `headers:`, `auth:`, `oauth2:`, `base_url:`, `url:`,
+`endpoint_url:`, `operation_policy:`, and `operation_policy_ref:` overrides.
+
+The operation policy is carried as a reference for telemetry and downstream
+provider wrappers. Credential refs and materialized credential headers are not
+emitted in telemetry metadata.
+
 ## Transport Overrides
 
 The default runtime transport is a `pristine`-backed adapter, which keeps
@@ -98,6 +134,7 @@ Provider-facing convenience wrappers generally use `new!/1`.
 - endpoint selection
 - auth/header composition
 - transport choice
+- governed authority materialization
 
 It should not grow provider-specific environment discovery or provider-specific
 policy logic.

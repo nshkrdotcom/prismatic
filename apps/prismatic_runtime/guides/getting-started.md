@@ -1,6 +1,6 @@
 # Getting Started
 
-Create a client:
+Create a standalone client:
 
 ```elixir
 client =
@@ -25,7 +25,7 @@ operation =
 ```
 
 For providers that use OAuth2, you can let the runtime resolve the bearer token
-from a token source:
+from a token source in standalone mode:
 
 ```elixir
 client =
@@ -36,5 +36,26 @@ client =
         {Prismatic.Adapters.TokenSource.File,
          path: "/tmp/provider-oauth.json"}
     ]
+  )
+```
+
+Governed provider integrations pass an authority value instead of direct env,
+local config, or token-source inputs:
+
+```elixir
+authority =
+  Prismatic.GovernedAuthority.new!(
+    base_url: "https://api.example.com/graphql",
+    credential_ref: "credential://provider/graphql",
+    credential_lease_ref: "lease://provider/graphql",
+    target_ref: "target://provider/graphql",
+    operation_policy_ref: "operation-policy://provider/read",
+    redaction_ref: "redaction://provider/default",
+    credential_headers: [{"authorization", "Bearer materialized-token"}]
+  )
+
+client =
+  Prismatic.Client.new!(
+    governed_authority: authority
   )
 ```
