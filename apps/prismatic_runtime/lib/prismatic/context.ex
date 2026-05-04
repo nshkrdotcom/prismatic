@@ -44,9 +44,78 @@ defmodule Prismatic.Context do
     telemetry_prefix: [type: {:list, :atom}, default: [:prismatic, :execute]]
   ]
 
+  @forbidden_governed_context_keys [
+    :base_url,
+    "base_url",
+    :headers,
+    "headers",
+    :auth,
+    "auth",
+    :oauth2,
+    "oauth2",
+    :api_token,
+    "api_token",
+    :env,
+    "env",
+    :default_client,
+    "default_client",
+    :endpoint_url,
+    "endpoint_url",
+    :operation_auth,
+    "operation_auth",
+    :client_auth,
+    "client_auth",
+    :provider_payload,
+    "provider_payload",
+    :middleware,
+    "middleware",
+    :token_source,
+    "token_source"
+  ]
+
+  @forbidden_governed_request_keys [
+    :headers,
+    "headers",
+    :authorization,
+    "authorization",
+    :auth,
+    "auth",
+    :oauth2,
+    "oauth2",
+    :base_url,
+    "base_url",
+    :url,
+    "url",
+    :endpoint,
+    "endpoint",
+    :endpoint_url,
+    "endpoint_url",
+    :operation_policy,
+    "operation_policy",
+    :operation_policy_ref,
+    "operation_policy_ref",
+    :api_token,
+    "api_token",
+    :env,
+    "env",
+    :default_client,
+    "default_client",
+    :operation_auth,
+    "operation_auth",
+    :client_auth,
+    "client_auth",
+    :provider_payload,
+    "provider_payload",
+    :middleware,
+    "middleware",
+    :token_source,
+    "token_source"
+  ]
+
   @spec new(keyword()) :: {:ok, t()} | {:error, Exception.t()}
   def new(opts) do
-    with {:ok, validated} <- NimbleOptions.validate(opts, @schema),
+    with :ok <- reject_governed_context_options(opts),
+         {:ok, validated} <- NimbleOptions.validate(opts, @schema),
          :ok <- validate_auth_configuration(validated),
          {:ok, governed_authority} <- normalize_governed_authority(validated[:governed_authority]),
          :ok <- validate_mode(opts, validated, governed_authority) do
@@ -130,24 +199,40 @@ defmodule Prismatic.Context do
     end
   end
 
-  defp validate_mode(opts, validated, %GovernedAuthority{}) do
-    with :ok <- reject_governed_context_option(opts, :base_url),
-         :ok <- reject_governed_context_option(opts, :headers),
-         :ok <- reject_governed_context_option(opts, :auth),
-         :ok <- reject_governed_context_option(opts, :oauth2) do
-      reject_governed_req_options(validated[:req_options])
-    end
+  defp validate_mode(_opts, validated, %GovernedAuthority{}) do
+    reject_governed_req_options(validated[:req_options])
   end
 
-  defp reject_governed_context_option(opts, key) do
-    if Keyword.has_key?(opts, key) do
-      {:error,
-       ArgumentError.exception(
-         "governed Prismatic clients cannot accept #{key}; use governed_authority"
-       )}
+  defp reject_governed_context_options(opts) when is_list(opts) do
+    if Keyword.has_key?(opts, :governed_authority) do
+      case forbidden_governed_context_option(opts) do
+        nil ->
+          :ok
+
+        key ->
+          {:error,
+           ArgumentError.exception(
+             "governed Prismatic clients cannot accept #{key}; use governed_authority"
+           )}
+      end
     else
       :ok
     end
+  end
+
+  defp reject_governed_context_options(_opts), do: :ok
+
+  defp forbidden_governed_context_option(opts) do
+    Enum.find_value(opts, fn
+      {:governed_authority, _value} ->
+        nil
+
+      {key, _value} ->
+        if key in @forbidden_governed_context_keys, do: key
+
+      _entry ->
+        nil
+    end)
   end
 
   defp reject_governed_req_options(req_options) do
@@ -166,7 +251,7 @@ defmodule Prismatic.Context do
   defp forbidden_governed_req_option(req_options) when is_list(req_options) do
     Enum.find_value(req_options, fn
       {key, _value} ->
-        if key in forbidden_governed_request_keys(), do: key
+        if key in @forbidden_governed_request_keys, do: key
 
       _entry ->
         nil
@@ -174,29 +259,4 @@ defmodule Prismatic.Context do
   end
 
   defp forbidden_governed_req_option(_req_options), do: nil
-
-  defp forbidden_governed_request_keys do
-    [
-      :headers,
-      "headers",
-      :authorization,
-      "authorization",
-      :auth,
-      "auth",
-      :oauth2,
-      "oauth2",
-      :base_url,
-      "base_url",
-      :url,
-      "url",
-      :endpoint,
-      "endpoint",
-      :endpoint_url,
-      "endpoint_url",
-      :operation_policy,
-      "operation_policy",
-      :operation_policy_ref,
-      "operation_policy_ref"
-    ]
-  end
 end

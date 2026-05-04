@@ -15,6 +15,111 @@ defmodule Prismatic.GovernedAuthorityTest do
 
   setup :verify_on_exit!
 
+  test "governed authority requires credential-handle, tenant, workspace, and operation refs" do
+    authority =
+      GovernedAuthority.new!(
+        phase7_authority(
+          operation_name: "Viewer",
+          operation_document_ref: "graphql-document://tenant-1/linear/viewer",
+          allowed_variable_names: ["includeTeams"]
+        )
+      )
+
+    assert authority.credential_handle_ref == "credential-handle://tenant-1/linear/api-token"
+    assert authority.tenant_ref == "tenant://tenant-1"
+    assert authority.workspace_ref == "workspace://tenant-1/product"
+    assert authority.organization_ref == "organization://linear/org-1"
+    assert authority.provider_account_ref == "provider-account://tenant-1/linear/api-token"
+    assert authority.request_scope_ref == "request-scope://tenant-1/linear/viewer"
+    assert authority.operation_name == "Viewer"
+    assert authority.operation_document_ref == "graphql-document://tenant-1/linear/viewer"
+    assert authority.allowed_variable_names == ["includeTeams"]
+  end
+
+  test "governed authority rejects unmanaged standalone GraphQL auth inputs" do
+    unmanaged_inputs = [
+      api_token: "raw-linear-api-token",
+      env: %{"LINEAR_API_KEY" => "raw-env-token"},
+      default_client: :linear_default_client,
+      endpoint_url: "https://api.linear.app/graphql",
+      headers: [{"authorization", "Bearer raw-header-token"}],
+      oauth2: [
+        token_source:
+          {Prismatic.Adapters.TokenSource.Static,
+           token: %Prismatic.OAuth2.Token{access_token: "oauth-bypass"}}
+      ]
+    ]
+
+    for {key, value} <- unmanaged_inputs do
+      error =
+        assert_raise ArgumentError, fn ->
+          phase7_authority([{key, value}])
+          |> GovernedAuthority.new!()
+        end
+
+      assert String.contains?(error.message, "governed authority rejects unmanaged #{key}")
+    end
+  end
+
+  test "governed operation scope rejects mismatch and undeclared variables before transport" do
+    client =
+      Client.new!(
+        governed_authority:
+          phase7_authority(operation_name: "Viewer", allowed_variable_names: []),
+        transport: Prismatic.TransportMock
+      )
+
+    assert {:error, %Error{type: :auth, details: %{reason: reason}}} =
+             Client.execute_document(client, "query Other { viewer { id } }", %{})
+
+    assert reason == {:governed_operation_scope_forbidden, :operation_name}
+
+    assert {:error, %Error{type: :auth, details: %{reason: variable_reason}}} =
+             Client.execute_document(
+               client,
+               "query Viewer($includeTeams: Boolean) { viewer { id } }",
+               %{"includeTeams" => true}
+             )
+
+    assert variable_reason == {:governed_operation_scope_forbidden, :variables}
+  end
+
+  test "linear OAuth app user and API token governed identities stay distinct" do
+    oauth_user =
+      GovernedAuthority.new!(
+        phase7_authority(
+          credential_handle_ref: "credential-handle://tenant-1/linear/oauth-app-user",
+          provider_account_ref: "provider-account://tenant-1/linear/oauth-app-user",
+          identity_kind: "oauth_app_user"
+        )
+      )
+
+    api_token =
+      GovernedAuthority.new!(
+        phase7_authority(
+          credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
+          provider_account_ref: "provider-account://tenant-1/linear/api-token",
+          identity_kind: "api_token"
+        )
+      )
+
+    assert oauth_user.identity_kind == "oauth_app_user"
+    assert api_token.identity_kind == "api_token"
+    refute oauth_user.credential_handle_ref == api_token.credential_handle_ref
+    refute oauth_user.provider_account_ref == api_token.provider_account_ref
+  end
+
+  test "governed authority inspection redacts GraphQL credential headers" do
+    authority =
+      phase7_authority(credential_headers: [{"authorization", "Bearer graphql-secret"}])
+      |> GovernedAuthority.new!()
+
+    rendered = inspect(authority)
+
+    refute String.contains?(rendered, "graphql-secret")
+    assert String.contains?(rendered, "[REDACTED]")
+  end
+
   test "governed client executes with authority endpoint and credential headers" do
     operation =
       Operation.new!(
@@ -62,7 +167,16 @@ defmodule Prismatic.GovernedAuthorityTest do
         token_source:
           {Prismatic.Adapters.TokenSource.Static,
            token: %Prismatic.OAuth2.Token{access_token: "oauth-bypass"}}
-      ]
+      ],
+      api_token: "raw-api-token",
+      env: %{"LINEAR_API_KEY" => "raw-env-token"},
+      default_client: :linear_default_client,
+      endpoint_url: "https://api.linear.app/graphql",
+      operation_auth: {:bearer, "operation-bypass"},
+      client_auth: {:bearer, "client-bypass"},
+      provider_payload: %{"authorization" => "Bearer raw-provider-token"},
+      middleware: [:auth_middleware],
+      token_source: Prismatic.Adapters.TokenSource.Static
     ]
 
     Enum.each(rejected_options, fn {key, value} ->
@@ -93,7 +207,15 @@ defmodule Prismatic.GovernedAuthorityTest do
       base_url: "https://request.example/graphql",
       url: "https://request.example/graphql",
       endpoint_url: "https://request.example/graphql",
-      operation_policy: "operation-policy://bypass"
+      operation_policy: "operation-policy://bypass",
+      api_token: "raw-api-token",
+      env: %{"LINEAR_API_KEY" => "raw-env-token"},
+      default_client: :linear_default_client,
+      operation_auth: {:bearer, "operation-bypass"},
+      client_auth: {:bearer, "client-bypass"},
+      provider_payload: %{"authorization" => "Bearer raw-provider-token"},
+      middleware: [:auth_middleware],
+      token_source: Prismatic.Adapters.TokenSource.Static
     ]
 
     Enum.each(rejected_options, fn {key, value} ->
@@ -107,6 +229,44 @@ defmodule Prismatic.GovernedAuthorityTest do
 
       assert reason == {:governed_request_option_forbidden, key}
     end)
+  end
+
+  test "governed operation scope is revalidated on every execution attempt" do
+    viewer =
+      Operation.new!(
+        id: "viewer",
+        name: "Viewer",
+        kind: :query,
+        document: "query Viewer { viewer { id } }",
+        root_field: "viewer"
+      )
+
+    other =
+      Operation.new!(
+        id: "other",
+        name: "Other",
+        kind: :query,
+        document: "query Other { viewer { id } }",
+        root_field: "viewer"
+      )
+
+    expect(Prismatic.TransportMock, :execute, fn _context, _payload, _opts ->
+      {:ok, %{status: 200, headers: [], body: %{"data" => %{"viewer" => %{"id" => "x"}}}}}
+    end)
+
+    client =
+      Client.new!(
+        governed_authority: authority(),
+        transport: Prismatic.TransportMock
+      )
+
+    assert {:ok, %Response{data: %{"viewer" => %{"id" => "x"}}}} =
+             Client.execute_operation(client, viewer)
+
+    assert {:error, %Error{type: :auth, details: %{reason: reason}}} =
+             Client.execute_operation(client, other)
+
+    assert reason == {:governed_operation_scope_forbidden, :operation_name}
   end
 
   test "governed telemetry carries policy context without auth values" do
@@ -175,7 +335,13 @@ defmodule Prismatic.GovernedAuthorityTest do
 
     client =
       Client.new!(
-        governed_authority: authority(),
+        governed_authority:
+          phase7_authority(
+            operation_name: "EnvConfigured",
+            request_scope_ref: "request-scope://tenant-1/linear/env-configured",
+            operation_policy_ref: "operation-policy://example/env-configured",
+            operation_document_ref: "graphql-document://tenant-1/linear/env-configured"
+          ),
         transport: LowerSimulation
       )
 
@@ -189,16 +355,31 @@ defmodule Prismatic.GovernedAuthorityTest do
   end
 
   defp authority do
-    GovernedAuthority.new!(
+    GovernedAuthority.new!(phase7_authority())
+  end
+
+  defp phase7_authority(overrides \\ []) do
+    [
       base_url: "https://governed.example/graphql",
-      credential_ref: "credential://example/graphql",
-      credential_lease_ref: "lease://example/graphql",
-      target_ref: "target://example/graphql",
+      tenant_ref: "tenant://tenant-1",
+      workspace_ref: "workspace://tenant-1/product",
+      organization_ref: "organization://linear/org-1",
+      provider_account_ref: "provider-account://tenant-1/linear/api-token",
+      connector_instance_ref: "connector-instance://tenant-1/linear/default",
+      credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
+      credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
+      target_ref: "target://tenant-1/linear/graphql",
+      request_scope_ref: "request-scope://tenant-1/linear/viewer",
       operation_policy_ref: "operation-policy://example/read",
+      operation_name: "Viewer",
+      operation_document_ref: "graphql-document://tenant-1/linear/viewer",
+      allowed_variable_names: [],
+      identity_kind: "api_token",
       redaction_ref: "redaction://example/default",
       headers: [{"x-provider-scope", "workspace-1"}],
       credential_headers: [{"authorization", "Bearer governed-token"}]
-    )
+    ]
+    |> Keyword.merge(overrides)
   end
 
   defp restore_simulation_config(nil),

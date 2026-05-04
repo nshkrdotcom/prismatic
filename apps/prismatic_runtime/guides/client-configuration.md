@@ -77,13 +77,23 @@ direct endpoint or auth options:
 authority =
   Prismatic.GovernedAuthority.new!(
     base_url: "https://api.example.com/graphql",
-    credential_ref: "credential://provider/graphql",
-    credential_lease_ref: "lease://provider/graphql",
+    tenant_ref: "tenant://tenant-1",
+    workspace_ref: "workspace://tenant-1/product",
+    organization_ref: "organization://linear/org-1",
+    provider_account_ref: "provider-account://tenant-1/linear/api-token",
+    connector_instance_ref: "connector-instance://tenant-1/linear/default",
+    credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
+    credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
     target_ref: "target://provider/graphql",
+    request_scope_ref: "request-scope://tenant-1/linear/viewer",
     operation_policy_ref: "operation-policy://provider/read",
+    operation_name: "Viewer",
+    operation_document_ref: "graphql-document://tenant-1/linear/viewer",
+    allowed_variable_names: [],
+    identity_kind: "api_token",
     redaction_ref: "redaction://provider/default",
     headers: [{"x-provider-version", "2026-05-03"}],
-    credential_headers: [{"authorization", "Bearer materialized-token"}]
+    credential_headers: [{"authorization", "[REDACTED_BY_AUTHORITY]"}]
   )
 
 client =
@@ -93,9 +103,12 @@ client =
 ```
 
 When `governed_authority:` is present, `Prismatic.Client` rejects direct
-`base_url:`, `headers:`, `auth:`, and `oauth2:` construction inputs. It also
-rejects request-time `headers:`, `auth:`, `oauth2:`, `base_url:`, `url:`,
-`endpoint_url:`, `operation_policy:`, and `operation_policy_ref:` overrides.
+`base_url:`, `headers:`, `auth:`, `oauth2:`, API-token, env, default-client,
+endpoint, middleware, token-source, client-auth, operation-auth, and provider
+payload construction inputs. It also rejects request-time `headers:`, `auth:`,
+`oauth2:`, `base_url:`, `url:`, `endpoint_url:`, `operation_policy:`,
+`operation_policy_ref:`, API-token, env, default-client, middleware,
+token-source, client-auth, operation-auth, and provider payload overrides.
 
 The operation policy is carried as a reference for telemetry and downstream
 provider wrappers. Credential refs and materialized credential headers are not

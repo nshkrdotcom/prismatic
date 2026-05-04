@@ -42,29 +42,33 @@ defmodule Prismatic.Client do
         variables \\ %{},
         opts \\ []
       ) do
-    metadata = metadata(context, operation.name, operation.kind)
+    with :ok <- validate_governed_operation_scope(context, operation.name, variables) do
+      metadata = metadata(context, operation.name, operation.kind)
 
-    execute_payload(
-      context,
-      build_payload(operation.document, variables, operation.name),
-      metadata,
-      opts
-    )
+      execute_payload(
+        context,
+        build_payload(operation.document, variables, operation.name),
+        metadata,
+        opts
+      )
+    end
   end
 
   @spec execute_document(t(), String.t(), map(), keyword()) ::
           {:ok, Response.t()} | {:error, Error.t()}
   def execute_document(client, document, variables \\ %{}, opts \\ []) when is_binary(document) do
-    selected_operation = Document.select_operation!(document, Keyword.get(opts, :operation_name))
+    with {:ok, selected_operation} <- select_operation(client.context, document, opts),
+         :ok <-
+           validate_governed_operation_scope(client.context, selected_operation.name, variables) do
+      metadata = metadata(client.context, selected_operation.name, selected_operation.kind)
 
-    metadata = metadata(client.context, selected_operation.name, selected_operation.kind)
-
-    execute_payload(
-      client.context,
-      build_payload(document, variables, selected_operation.name),
-      metadata,
-      opts
-    )
+      execute_payload(
+        client.context,
+        build_payload(document, variables, selected_operation.name),
+        metadata,
+        opts
+      )
+    end
   end
 
   defp execute_payload(%Context{} = context, payload, metadata, opts) do
@@ -108,13 +112,77 @@ defmodule Prismatic.Client do
   defp maybe_put_governed_metadata(metadata, %GovernedAuthority{} = authority) do
     Map.merge(metadata, %{
       governed?: true,
+      tenant_ref: authority.tenant_ref,
+      workspace_ref: authority.workspace_ref,
+      organization_ref: authority.organization_ref,
+      provider_account_ref: authority.provider_account_ref,
+      connector_instance_ref: authority.connector_instance_ref,
+      credential_handle_ref: authority.credential_handle_ref,
+      credential_lease_ref: authority.credential_lease_ref,
       target_ref: authority.target_ref,
+      request_scope_ref: authority.request_scope_ref,
       operation_policy_ref: authority.operation_policy_ref,
+      operation_document_ref: authority.operation_document_ref,
+      identity_kind: authority.identity_kind,
       redaction_ref: authority.redaction_ref
     })
   end
 
   defp maybe_put_governed_metadata(metadata, nil), do: metadata
+
+  defp select_operation(%Context{governed_authority: %GovernedAuthority{}}, document, opts) do
+    {:ok, Document.select_operation!(document, Keyword.get(opts, :operation_name))}
+  rescue
+    ArgumentError ->
+      {:error, governed_operation_scope_error(:operation_document)}
+  end
+
+  defp select_operation(%Context{}, document, opts) do
+    {:ok, Document.select_operation!(document, Keyword.get(opts, :operation_name))}
+  end
+
+  defp validate_governed_operation_scope(
+         %Context{governed_authority: %GovernedAuthority{} = authority},
+         operation_name,
+         variables
+       ) do
+    case validate_governed_operation_name(authority, operation_name) do
+      :ok -> validate_governed_variables(authority, variables)
+      {:error, %Error{} = error} -> {:error, error}
+    end
+  end
+
+  defp validate_governed_operation_scope(%Context{}, _operation_name, _variables), do: :ok
+
+  defp validate_governed_operation_name(%GovernedAuthority{} = authority, operation_name) do
+    if operation_name == authority.operation_name do
+      :ok
+    else
+      {:error, governed_operation_scope_error(:operation_name, authority)}
+    end
+  end
+
+  defp validate_governed_variables(%GovernedAuthority{} = authority, variables)
+       when is_map(variables) do
+    if Enum.all?(Map.keys(variables), &allowed_variable?(&1, authority.allowed_variable_names)) do
+      :ok
+    else
+      {:error, governed_operation_scope_error(:variables, authority)}
+    end
+  end
+
+  defp validate_governed_variables(%GovernedAuthority{} = authority, _variables),
+    do: {:error, governed_operation_scope_error(:variables, authority)}
+
+  defp allowed_variable?(key, allowed_variable_names) when is_binary(key) do
+    key in allowed_variable_names
+  end
+
+  defp allowed_variable?(key, allowed_variable_names) when is_atom(key) do
+    Atom.to_string(key) in allowed_variable_names
+  end
+
+  defp allowed_variable?(_key, _allowed_variable_names), do: false
 
   defp transport_opts(opts), do: Keyword.drop(opts, [:operation_name])
 
@@ -173,7 +241,23 @@ defmodule Prismatic.Client do
       :operation_policy,
       "operation_policy",
       :operation_policy_ref,
-      "operation_policy_ref"
+      "operation_policy_ref",
+      :api_token,
+      "api_token",
+      :env,
+      "env",
+      :default_client,
+      "default_client",
+      :operation_auth,
+      "operation_auth",
+      :client_auth,
+      "client_auth",
+      :provider_payload,
+      "provider_payload",
+      :middleware,
+      "middleware",
+      :token_source,
+      "token_source"
     ]
   end
 
@@ -196,6 +280,35 @@ defmodule Prismatic.Client do
       graphql_errors: nil,
       request_id: nil,
       details: %{reason: {:governed_request_option_forbidden, key}}
+    }
+  end
+
+  defp governed_operation_scope_error(reason) do
+    %Error{
+      type: :auth,
+      message: "Governed GraphQL operation is outside authority scope",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{reason: {:governed_operation_scope_forbidden, reason}}
+    }
+  end
+
+  defp governed_operation_scope_error(reason, %GovernedAuthority{} = authority) do
+    %Error{
+      type: :auth,
+      message: "Governed GraphQL operation is outside authority scope",
+      status: nil,
+      graphql_errors: nil,
+      request_id: nil,
+      details: %{
+        reason: {:governed_operation_scope_forbidden, reason},
+        credential_handle_ref: authority.credential_handle_ref,
+        credential_lease_ref: authority.credential_lease_ref,
+        request_scope_ref: authority.request_scope_ref,
+        operation_policy_ref: authority.operation_policy_ref,
+        operation_document_ref: authority.operation_document_ref
+      }
     }
   end
 
