@@ -3,6 +3,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
   Public schema-reference module renderer for provider SDKs.
   """
 
+  alias PrismaticCodegen.ModuleNames
   alias PrismaticCodegen.Provider
   alias PrismaticCodegen.ProviderIR
   alias PrismaticCodegen.ProviderIR.Schema
@@ -51,7 +52,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
   defp category_modules(%ProviderIR{} = ir) do
     Enum.map(@root_categories, fn {kind, root_name, module_segment} ->
       fields = root_fields(ir.schema, root_name)
-      module = Module.concat([ir.provider.public_namespace, module_segment])
+      module = ModuleNames.generated!(ir.provider.public_namespace, [module_segment])
 
       %RenderedFile{
         path: module_path(module),
@@ -61,7 +62,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
     end) ++
       Enum.map(@type_categories, fn {kind, module_segment} ->
         types = schema_types(ir.schema, kind)
-        module = Module.concat([ir.provider.public_namespace, module_segment])
+        module = ModuleNames.generated!(ir.provider.public_namespace, [module_segment])
 
         %RenderedFile{
           path: module_path(module),
@@ -78,8 +79,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
         root_fields(ir.schema, root_name)
         |> Enum.map(fn field ->
           module =
-            Module.concat([
-              ir.provider.public_namespace,
+            ModuleNames.generated!(ir.provider.public_namespace, [
               module_segment,
               module_segment_for_name(field.name)
             ])
@@ -96,7 +96,8 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
       Enum.flat_map(@type_categories, fn {kind, module_segment} ->
         schema_types(ir.schema, kind)
         |> Enum.map(fn type ->
-          module = Module.concat([ir.provider.public_namespace, module_segment, type.name])
+          module =
+            ModuleNames.generated!(ir.provider.public_namespace, [module_segment, type.name])
 
           %RenderedFile{
             path: module_path(module),
@@ -388,8 +389,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
   defp root_field_module(ir, kind, field_name) do
     {module_segment, _root_name} = root_category(kind)
 
-    Module.concat([
-      ir.provider.public_namespace,
+    ModuleNames.generated!(ir.provider.public_namespace, [
       module_segment,
       module_segment_for_name(field_name)
     ])
@@ -397,7 +397,7 @@ defmodule PrismaticCodegen.Render.ElixirSDK.PublicSchemaModules do
 
   defp type_module(ir, kind, type_name) do
     {module_segment, _kind} = type_category(kind)
-    Module.concat([ir.provider.public_namespace, module_segment, type_name])
+    ModuleNames.generated!(ir.provider.public_namespace, [module_segment, type_name])
   end
 
   defp root_category(kind) do

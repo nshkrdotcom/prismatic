@@ -4,6 +4,7 @@ defmodule PrismaticCodegen.Compiler do
   """
 
   alias Prismatic.Operation
+  alias PrismaticCodegen.ModuleNames
   alias PrismaticCodegen.Provider
   alias PrismaticCodegen.ProviderIR
   alias PrismaticCodegen.Render.ElixirSDK
@@ -91,7 +92,7 @@ defmodule PrismaticCodegen.Compiler do
       %ProviderIR.Operation{
         id: document.id,
         name: document.name,
-        module: Module.concat([provider.namespace, "Operations", document.name]),
+        module: ModuleNames.generated!(provider.namespace, ["Operations", document.name]),
         operation:
           Operation.new!(
             id: document.id,
@@ -119,7 +120,7 @@ defmodule PrismaticCodegen.Compiler do
           [
             %ProviderIR.Model{
               name: type_name,
-              module: Module.concat([provider.namespace, "Models", type_name]),
+              module: ModuleNames.generated!(provider.namespace, ["Models", type_name]),
               fields:
                 Enum.map(type.fields, fn field ->
                   named = Introspection.named_type(field.type)
@@ -151,7 +152,7 @@ defmodule PrismaticCodegen.Compiler do
 
       %ProviderIR.Enum{
         name: type_name,
-        module: Module.concat([provider.namespace, "Enums", type_name]),
+        module: ModuleNames.generated!(provider.namespace, ["Enums", type_name]),
         values: Enum.map(type.enum_values, & &1.name)
       }
     end)

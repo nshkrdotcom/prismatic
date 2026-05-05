@@ -4,6 +4,7 @@ defmodule PrismaticCodegen.Provider do
   """
 
   alias NimbleOptions.ValidationError
+  alias PrismaticCodegen.ModuleNames
 
   defmodule Source do
     @moduledoc """
@@ -126,7 +127,7 @@ defmodule PrismaticCodegen.Provider do
   def load!(provider_module) when is_binary(provider_module) do
     provider_module
     |> String.split(".")
-    |> Module.concat()
+    |> ModuleNames.existing!()
     |> load!()
   end
 
@@ -171,6 +172,6 @@ defmodule PrismaticCodegen.Provider do
     client_module
     |> Module.split()
     |> Enum.drop(-1)
-    |> Module.concat()
+    |> Module.safe_concat()
   end
 end

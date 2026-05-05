@@ -27,7 +27,8 @@ defmodule PrismaticCodegen.SourcePolicyTest do
     "Reg" <> "Exp",
     "reg" <> "exp",
     "re." <> "compile",
-    "import " <> "re"
+    "import " <> "re",
+    "Module." <> "concat"
   ]
 
   test "active source avoids dynamic atom conversion and pattern engines" do

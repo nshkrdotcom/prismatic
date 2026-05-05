@@ -58,12 +58,7 @@ defmodule Prismatic.DependencyResolverTest do
   end
 
   test "prismatic_codegen uses Hex runtime deps for publishing commands", %{tmp_dir: tmp_dir} do
-    probe_module =
-      Module.concat([
-        Prismatic,
-        TestSupport,
-        "CodegenMixProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = Prismatic.TestSupport.CodegenMixProbe
 
     mix_path = Path.join([tmp_dir, "standalone", "prismatic_codegen", "mix.exs"])
 
@@ -77,7 +72,9 @@ defmodule Prismatic.DependencyResolverTest do
     System.argv(["hex.build"])
 
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
-    assert {:prismatic, "~> 0.2.0"} = find_dependency!(probe_module.project()[:deps], :prismatic)
+
+    assert {:prismatic, "~> 0.2.0"} =
+             find_dependency!(project_deps(probe_module), :prismatic)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -86,12 +83,7 @@ defmodule Prismatic.DependencyResolverTest do
   end
 
   test "prismatic_runtime uses Hex pristine deps for publishing commands", %{tmp_dir: tmp_dir} do
-    probe_module =
-      Module.concat([
-        Prismatic,
-        TestSupport,
-        "RuntimeMixProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = Prismatic.TestSupport.RuntimeMixProbe
 
     mix_path = Path.join([tmp_dir, "standalone", "prismatic_runtime", "mix.exs"])
 
@@ -107,10 +99,10 @@ defmodule Prismatic.DependencyResolverTest do
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
     assert {:pristine, "~> 0.2.1", []} =
-             find_dependency!(probe_module.project()[:deps], :pristine)
+             find_dependency!(project_deps(probe_module), :pristine)
 
     assert {:execution_plane, "~> 0.1.0", []} =
-             find_dependency!(probe_module.project()[:deps], :execution_plane)
+             find_dependency!(project_deps(probe_module), :execution_plane)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -121,12 +113,7 @@ defmodule Prismatic.DependencyResolverTest do
   test "prismatic_provider_testkit uses Hex codegen deps for release-locking commands", %{
     tmp_dir: tmp_dir
   } do
-    probe_module =
-      Module.concat([
-        Prismatic,
-        TestSupport,
-        "ProviderTestkitMixProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = Prismatic.TestSupport.ProviderTestkitMixProbe
 
     mix_path = Path.join([tmp_dir, "standalone", "prismatic_provider_testkit", "mix.exs"])
 
@@ -142,7 +129,7 @@ defmodule Prismatic.DependencyResolverTest do
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
     assert {:prismatic_codegen, "~> 0.2.0"} =
-             find_dependency!(probe_module.project()[:deps], :prismatic_codegen)
+             find_dependency!(project_deps(probe_module), :prismatic_codegen)
 
     on_exit(fn ->
       :code.purge(probe_module)
@@ -151,19 +138,9 @@ defmodule Prismatic.DependencyResolverTest do
   end
 
   test "prismatic_provider_testkit installed from git keeps git codegen deps", %{tmp_dir: tmp_dir} do
-    probe_module =
-      Module.concat([
-        Prismatic,
-        TestSupport,
-        "ProviderTestkitGitProbe#{System.unique_integer([:positive])}"
-      ])
+    probe_module = Prismatic.TestSupport.ProviderTestkitGitProbe
 
-    resolver_module =
-      Module.concat([
-        Prismatic,
-        TestSupport,
-        "DependencyResolverProbe#{System.unique_integer([:positive])}"
-      ])
+    resolver_module = Prismatic.TestSupport.DependencyResolverProbe
 
     dependency_root = Path.join([tmp_dir, "deps", "prismatic_provider_testkit"])
     mix_path = Path.join([dependency_root, "apps", "prismatic_provider_testkit", "mix.exs"])
@@ -185,7 +162,7 @@ defmodule Prismatic.DependencyResolverTest do
     assert [{^probe_module, _beam}] = Code.compile_file(mix_path)
 
     assert {:prismatic_codegen, opts} =
-             find_dependency!(probe_module.project()[:deps], :prismatic_codegen)
+             find_dependency!(project_deps(probe_module), :prismatic_codegen)
 
     assert opts[:github] == "nshkrdotcom/prismatic"
     assert opts[:branch] == "main"
@@ -293,5 +270,11 @@ defmodule Prismatic.DependencyResolverTest do
       {^app, opts} when is_list(opts) -> true
       _other -> false
     end) || flunk("expected dependency #{inspect(app)} to be present")
+  end
+
+  defp project_deps(module) do
+    module
+    |> :erlang.apply(:project, [])
+    |> Keyword.fetch!(:deps)
   end
 end
