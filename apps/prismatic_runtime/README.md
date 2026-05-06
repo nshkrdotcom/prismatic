@@ -55,14 +55,14 @@ end
 ## Create a client
 
 Standalone clients can pass a direct endpoint and direct auth. Provider SDKs
-may still source those values from local env or token files for direct
+may still pass explicitly loaded local development credentials for direct
 developer use.
 
 ```elixir
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+    auth: {:bearer, load_local_development_token()}
   )
 ```
 
@@ -95,6 +95,8 @@ authority =
     connector_instance_ref: "connector-instance://tenant-1/linear/default",
     credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
     credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
+    token_family_ref: "token-family://tenant-1/linear/api-token",
+    subject_ref: "subject://tenant-1/operator/ada",
     target_ref: "target://provider/graphql",
     request_scope_ref: "request-scope://tenant-1/linear/viewer",
     operation_policy_ref: "operation-policy://provider/read",
@@ -112,6 +114,11 @@ client =
     governed_authority: authority
   )
 ```
+
+The governed authority binds GraphQL operation name, provider account,
+workspace, token family, tenant, and subject before transport. This preserves
+standalone GraphQL SDK behavior while giving higher control planes a ref-only
+operation-admission shape.
 
 ## Execute an operation
 

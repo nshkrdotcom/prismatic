@@ -31,6 +31,8 @@ defmodule Prismatic.GovernedAuthorityTest do
     assert authority.organization_ref == "organization://linear/org-1"
     assert authority.provider_account_ref == "provider-account://tenant-1/linear/api-token"
     assert authority.request_scope_ref == "request-scope://tenant-1/linear/viewer"
+    assert authority.token_family_ref == "token-family://tenant-1/linear/api-token"
+    assert authority.subject_ref == "subject://tenant-1/operator/ada"
     assert authority.operation_name == "Viewer"
     assert authority.operation_document_ref == "graphql-document://tenant-1/linear/viewer"
     assert authority.allowed_variable_names == ["includeTeams"]
@@ -317,7 +319,7 @@ defmodule Prismatic.GovernedAuthorityTest do
   end
 
   test "governed lower simulation does not read application configured profiles" do
-    previous_config = Application.get_env(:prismatic, @simulation_config_key)
+    previous_config = Application.fetch_env(:prismatic, @simulation_config_key)
 
     on_exit(fn ->
       restore_simulation_config(previous_config)
@@ -368,6 +370,8 @@ defmodule Prismatic.GovernedAuthorityTest do
       connector_instance_ref: "connector-instance://tenant-1/linear/default",
       credential_handle_ref: "credential-handle://tenant-1/linear/api-token",
       credential_lease_ref: "credential-lease://tenant-1/linear/api-token",
+      token_family_ref: "token-family://tenant-1/linear/api-token",
+      subject_ref: "subject://tenant-1/operator/ada",
       target_ref: "target://tenant-1/linear/graphql",
       request_scope_ref: "request-scope://tenant-1/linear/viewer",
       operation_policy_ref: "operation-policy://example/read",
@@ -382,9 +386,9 @@ defmodule Prismatic.GovernedAuthorityTest do
     |> Keyword.merge(overrides)
   end
 
-  defp restore_simulation_config(nil),
+  defp restore_simulation_config(:error),
     do: Application.delete_env(:prismatic, @simulation_config_key)
 
-  defp restore_simulation_config(config),
+  defp restore_simulation_config({:ok, config}),
     do: Application.put_env(:prismatic, @simulation_config_key, config)
 end
