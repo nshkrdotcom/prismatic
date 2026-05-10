@@ -1,11 +1,9 @@
-unless Code.ensure_loaded?(Prismatic.Build.DependencyResolver) do
-  Code.require_file("../../build_support/dependency_resolver.exs", __DIR__)
+unless Code.ensure_loaded?(DependencySources) do
+  Code.require_file("build_support/dependency_sources.exs", __DIR__)
 end
 
 defmodule Prismatic.Codegen.MixProject do
   use Mix.Project
-
-  alias Prismatic.Build.DependencyResolver
 
   @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
@@ -48,11 +46,7 @@ defmodule Prismatic.Codegen.MixProject do
   end
 
   defp prismatic_runtime_dep do
-    if publishing_package?() or installing_as_dependency?() do
-      {:prismatic, "~> 0.2.0"}
-    else
-      DependencyResolver.prismatic_runtime()
-    end
+    DependencySources.dep(:prismatic, __DIR__)
   end
 
   defp description do
@@ -80,7 +74,7 @@ defmodule Prismatic.Codegen.MixProject do
     [
       name: "prismatic_codegen",
       description: description(),
-      files: ~w(lib mix.exs README.md guides),
+      files: ~w(lib build_support mix.exs README.md guides),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]
@@ -92,11 +86,5 @@ defmodule Prismatic.Codegen.MixProject do
       plt_add_apps: [:mix, :ex_unit],
       plt_core_path: "../../_build/plts/core"
     ]
-  end
-
-  defp publishing_package?, do: Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
-
-  defp installing_as_dependency? do
-    Enum.member?(Path.split(__DIR__), "deps")
   end
 end

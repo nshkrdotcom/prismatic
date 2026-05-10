@@ -74,8 +74,8 @@ oauth2_source =
      {Prismatic.Adapters.TokenSource.File,
       path: "/tmp/provider-oauth.json"},
    provider: MyProvider.OAuth.provider(),
-   client_id: System.fetch_env!("PROVIDER_CLIENT_ID"),
-   client_secret: System.fetch_env!("PROVIDER_CLIENT_SECRET"),
+   client_id: "provider-client-id",
+   client_secret: "provider-client-secret",
    refresh_skew_seconds: 60}
 ```
 

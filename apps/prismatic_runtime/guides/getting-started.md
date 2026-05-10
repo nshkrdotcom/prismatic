@@ -6,7 +6,7 @@ Create a standalone client:
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+    auth: {:bearer, "example-api-token"}
   )
 ```
 

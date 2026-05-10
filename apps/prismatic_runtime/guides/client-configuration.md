@@ -21,8 +21,7 @@ end users only need to provide auth.
 
 The runtime supports three generic auth modes today.
 
-These modes are standalone compatibility inputs. They can be backed by local
-env or saved token files in provider SDKs, but they are not governed authority.
+These modes are standalone compatibility inputs. They can be backed by explicit local values or saved token files in provider SDKs, but they are not governed authority.
 
 Bearer token:
 
@@ -30,7 +29,7 @@ Bearer token:
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+    auth: {:bearer, "example-api-token"}
   )
 ```
 
@@ -40,7 +39,7 @@ Custom header:
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:header, "x-api-key", System.fetch_env!("EXAMPLE_API_KEY")}
+    auth: {:header, "x-api-key", "example-api-key"}
   )
 ```
 

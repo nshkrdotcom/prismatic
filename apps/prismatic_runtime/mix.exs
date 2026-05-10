@@ -1,11 +1,9 @@
-unless Code.ensure_loaded?(Prismatic.Build.DependencyResolver) do
-  Code.require_file("../../build_support/dependency_resolver.exs", __DIR__)
+unless Code.ensure_loaded?(DependencySources) do
+  Code.require_file("build_support/dependency_sources.exs", __DIR__)
 end
 
 defmodule Prismatic.Runtime.MixProject do
   use Mix.Project
-
-  alias Prismatic.Build.DependencyResolver
 
   @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
@@ -57,11 +55,11 @@ defmodule Prismatic.Runtime.MixProject do
   end
 
   defp execution_plane_dep do
-    DependencyResolver.execution_plane()
+    DependencySources.dep(:execution_plane, __DIR__)
   end
 
   defp pristine_runtime_dep do
-    DependencyResolver.pristine_runtime()
+    DependencySources.dep(:pristine, __DIR__)
   end
 
   defp description do
@@ -119,7 +117,7 @@ defmodule Prismatic.Runtime.MixProject do
     [
       name: "prismatic",
       description: description(),
-      files: ~w(lib assets mix.exs README.md CHANGELOG.md LICENSE),
+      files: ~w(lib assets build_support mix.exs README.md CHANGELOG.md LICENSE),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]

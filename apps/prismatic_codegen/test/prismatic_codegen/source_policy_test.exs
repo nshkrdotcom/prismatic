@@ -53,7 +53,8 @@ defmodule PrismaticCodegen.SourcePolicyTest do
   defp generated_or_build_path?(path) do
     parts = Path.split(path)
 
-    Enum.any?(parts, &(&1 in ["deps", "_build", "dist", "doc", "tmp", "node_modules"]))
+    Enum.any?(parts, &(&1 in ["deps", "_build", "dist", "doc", "tmp", "node_modules"])) or
+      Path.basename(path) == "dependency_sources.exs"
   end
 
   defp file_contains?(path, token) do

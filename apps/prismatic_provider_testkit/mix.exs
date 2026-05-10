@@ -1,11 +1,9 @@
-unless Code.ensure_loaded?(Prismatic.Build.DependencyResolver) do
-  Code.require_file("../../build_support/dependency_resolver.exs", __DIR__)
+unless Code.ensure_loaded?(DependencySources) do
+  Code.require_file("build_support/dependency_sources.exs", __DIR__)
 end
 
 defmodule Prismatic.ProviderTestkit.MixProject do
   use Mix.Project
-
-  alias Prismatic.Build.DependencyResolver
 
   @version "0.2.0"
   @source_url "https://github.com/nshkrdotcom/prismatic"
@@ -46,11 +44,7 @@ defmodule Prismatic.ProviderTestkit.MixProject do
   end
 
   defp prismatic_codegen_dep do
-    if publishing_package?() or installing_from_hex_package?() do
-      {:prismatic_codegen, "~> 0.2.0"}
-    else
-      DependencyResolver.prismatic_codegen()
-    end
+    DependencySources.dep(:prismatic_codegen, __DIR__)
   end
 
   defp description do
@@ -77,7 +71,7 @@ defmodule Prismatic.ProviderTestkit.MixProject do
     [
       name: "prismatic_provider_testkit",
       description: description(),
-      files: ~w(lib mix.exs README.md),
+      files: ~w(lib build_support mix.exs README.md),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url},
       maintainers: ["nshkrdotcom"]
@@ -89,17 +83,5 @@ defmodule Prismatic.ProviderTestkit.MixProject do
       plt_add_apps: [:mix, :ex_unit],
       plt_core_path: "../../_build/plts/core"
     ]
-  end
-
-  defp publishing_package?, do: Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
-
-  defp installing_from_hex_package? do
-    installing_as_dependency?() and not git_checkout_dependency?()
-  end
-
-  defp installing_as_dependency?, do: Enum.member?(Path.split(__DIR__), "deps")
-
-  defp git_checkout_dependency? do
-    File.exists?(Path.expand("../../.git", __DIR__))
   end
 end

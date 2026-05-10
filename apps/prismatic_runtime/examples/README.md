@@ -13,7 +13,7 @@ env at the runtime boundary.
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:bearer, System.fetch_env!("EXAMPLE_API_TOKEN")}
+    auth: {:bearer, "example-api-token"}
   )
 ```
 
@@ -23,7 +23,7 @@ client =
 client =
   Prismatic.Client.new!(
     base_url: "https://api.example.com/graphql",
-    auth: {:header, "x-api-key", System.fetch_env!("EXAMPLE_API_KEY")}
+    auth: {:header, "x-api-key", "example-api-key"}
   )
 ```
 

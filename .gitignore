@@ -8,6 +8,8 @@
 *.beam
 /.DS_Store
 /tmp/
+.dependency_sources.local.exs
+apps/*/.dependency_sources.local.exs
 
 # Nested workspace package artifacts
 apps/**/_build/

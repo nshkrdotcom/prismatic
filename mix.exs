@@ -1,3 +1,7 @@
+unless Code.ensure_loaded?(DependencySources) do
+  Code.require_file("build_support/dependency_sources.exs", __DIR__)
+end
+
 defmodule Prismatic.Workspace.MixProject do
   use Mix.Project
 
@@ -36,7 +40,7 @@ defmodule Prismatic.Workspace.MixProject do
 
   defp deps do
     [
-      {:blitz, "~> 0.3.0", runtime: false},
+      DependencySources.dep(:blitz, __DIR__, runtime: false),
       workspace_package_deps(),
       {:plug, "~> 1.19", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.2", only: :test, runtime: false},
@@ -166,16 +170,8 @@ defmodule Prismatic.Workspace.MixProject do
   end
 
   defp workspace_package_deps do
-    if publishing_package?() or installing_as_dependency?() do
-      Enum.map(@workspace_packages, fn {app, _path} -> {app, "~> #{@version}"} end)
-    else
-      Enum.map(@workspace_packages, fn {app, path} -> {app, [path: path]} end)
-    end
+    Enum.map(@workspace_packages, fn {app, _path} -> DependencySources.dep(app, __DIR__) end)
   end
-
-  defp publishing_package?, do: Enum.any?(System.argv(), &(&1 in ["hex.build", "hex.publish"]))
-
-  defp installing_as_dependency?, do: Enum.member?(Path.split(__DIR__), "deps")
 
   defp workspace_dialyzer_paths do
     build_path = Path.join("_build", to_string(Mix.env()))
@@ -200,7 +196,6 @@ defmodule Prismatic.Workspace.MixProject do
         unset_env: ["HEX_API_KEY"]
       ],
       parallelism: [
-        env: "PRISMATIC_MONOREPO_MAX_CONCURRENCY",
         multiplier: :auto,
         base: [
           deps_get: 1,
